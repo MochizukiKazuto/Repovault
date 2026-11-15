@@ -1,0 +1,2069 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RepoVault: Brankas Repositori GitHub Cerdas</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome untuk Ikon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        slate: {
+                            850: '#151e32',
+                            950: '#090d16',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Kustomisasi Scrollbar untuk tema gelap */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+        
+        /* Animasi halus */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.25s ease-out forwards;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .animate-fade-in { animation: none; }
+        }
+
+        /* Custom Range Slider */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #06b6d4;
+            cursor: pointer;
+            border: 2px solid #ffffff;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-200 font-sans antialiased min-h-screen flex flex-col selection:bg-cyan-500/30 selection:text-cyan-200">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Header / Navbar -->
+    <header class="sticky top-0 z-30 bg-slate-950/85 backdrop-blur-md border-b border-slate-800/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+            <!-- Brand -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-cyan-400">
+                    <i class="fa-solid fa-vault text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg sm:text-xl font-bold tracking-tight text-white">
+                        RepoVault
+                    </h1>
+                    <p class="text-xs text-slate-400 hidden sm:block">Tempel URL GitHub, sistem otomatis mengisi & mengategorikan</p>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-2 sm:gap-3">
+                <!-- Tombol GitHub Sync & Integration -->
+                <button onclick="openGitHubModal()" id="gh-connect-btn" class="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700/80 text-xs sm:text-sm font-medium transition flex items-center gap-2" title="Pengaturan GitHub Cloud Sync & Auto-Star">
+                    <i class="fa-brands fa-github text-base text-white"></i>
+                    <span id="gh-btn-label" class="hidden sm:inline">GitHub Sync</span>
+                    <span id="gh-status-dot" class="w-2 h-2 rounded-full bg-slate-500" aria-hidden="true"></span>
+                </button>
+
+                <!-- Dropdown Backup / Export / Import -->
+                <div class="relative" id="backup-dropdown-wrapper">
+                    <button onclick="toggleBackupMenu()" class="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-xs sm:text-sm font-medium transition flex items-center gap-2" title="Ekspor atau Impor Data">
+                        <i class="fa-solid fa-database text-cyan-400"></i>
+                        <span class="hidden md:inline">Backup / Data</span>
+                        <i class="fa-solid fa-chevron-down text-[10px] text-slate-500"></i>
+                    </button>
+                    
+                    <div id="backup-menu" class="hidden absolute right-0 mt-2 w-60 rounded-xl bg-slate-900 border border-slate-800 shadow-2xl py-1.5 z-40 animate-fade-in">
+                        <div class="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">GitHub Cloud</div>
+                        <button onclick="importFromGitHubStars()" class="w-full text-left px-4 py-2 text-sm text-amber-300 hover:bg-slate-800 flex items-center gap-2.5 transition">
+                            <i class="fa-solid fa-star w-4 text-center text-amber-400"></i> Import dari GitHub Stars
+                        </button>
+                        <div class="my-1 border-t border-slate-800"></div>
+                        <div class="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Ekspor Lokal</div>
+                        <button onclick="exportMarkdown()" class="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-cyan-400 flex items-center gap-2.5 transition">
+                            <i class="fa-brands fa-markdown w-4 text-center text-cyan-400"></i> Ekspor ke Markdown (.md)
+                        </button>
+                        <button onclick="exportJSON()" class="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-emerald-400 flex items-center gap-2.5 transition">
+                            <i class="fa-solid fa-file-code w-4 text-center text-emerald-400"></i> Backup JSON (.json)
+                        </button>
+                        <div class="my-1 border-t border-slate-800"></div>
+                        <div class="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Pulihkan</div>
+                        <label class="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-cyan-400 flex items-center gap-2.5 transition cursor-pointer">
+                            <i class="fa-solid fa-file-import w-4 text-center text-cyan-400"></i> Impor File JSON
+                            <input type="file" id="import-json-input" accept=".json" class="hidden" onchange="importJSON(event)">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Tombol Tambah Repo -->
+                <button onclick="openModal()" class="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs sm:text-sm font-semibold transition flex items-center gap-2 active:scale-95">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Simpan Repo</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+
+        <!-- Statistik Ringkas (dihitung dari data tersimpan, bukan angka hiasan) -->
+        <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <!-- Total Repo -->
+            <div class="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-4 sm:p-5 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-400">Total Tersimpan</p>
+                    <p id="stat-total" class="text-2xl sm:text-3xl font-bold text-white mt-1">0</p>
+                </div>
+                <div class="w-11 h-11 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+                    <i class="fa-brands fa-github text-xl"></i>
+                </div>
+            </div>
+
+            <!-- Belum Dicek -->
+            <div class="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-4 sm:p-5 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-400">Belum Dicek</p>
+                    <p id="stat-unchecked" class="text-2xl sm:text-3xl font-bold text-amber-400 mt-1">0</p>
+                </div>
+                <div class="w-11 h-11 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                    <i class="fa-solid fa-hourglass-half text-lg"></i>
+                </div>
+            </div>
+
+            <!-- Wajib Pakai -->
+            <div class="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-4 sm:p-5 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-400">Wajib Pakai</p>
+                    <p id="stat-musthave" class="text-2xl sm:text-3xl font-bold text-purple-400 mt-1">0</p>
+                </div>
+                <div class="w-11 h-11 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+                    <i class="fa-solid fa-fire text-lg"></i>
+                </div>
+            </div>
+
+            <!-- Rata-rata Rating -->
+            <div class="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-4 sm:p-5 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-400">Rata-rata Rating</p>
+                    <div class="flex items-baseline gap-1 mt-1">
+                        <p id="stat-rating" class="text-2xl sm:text-3xl font-bold text-emerald-400">0.0</p>
+                        <span class="text-xs text-slate-500">/10</span>
+                    </div>
+                </div>
+                <div class="w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                    <i class="fa-solid fa-star text-lg"></i>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bar Pencarian, Filter & Urutkan -->
+        <section class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 space-y-3">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+                <!-- Search Input -->
+                <div class="md:col-span-5 relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
+                    <input type="text" id="search-input" placeholder="Cari nama repo, bahasa, topik, atau catatan..." 
+                        class="w-full pl-10 pr-9 py-2.5 bg-slate-950 border border-slate-800 focus:border-cyan-500 rounded-xl text-sm text-white placeholder-slate-500 outline-none transition">
+                    <button id="clear-search-btn" onclick="clearSearch()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                        <i class="fa-solid fa-circle-xmark text-sm"></i>
+                    </button>
+                </div>
+
+                <!-- Filter Kategori -->
+                <div class="md:col-span-3">
+                    <select id="filter-category" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 focus:border-cyan-500 rounded-xl text-sm text-slate-200 outline-none transition cursor-pointer">
+                        <option value="ALL">Semua Kategori</option>
+                        <option value="AI & Agents">AI & Agents</option>
+                        <option value="Web & Frontend">Web & Frontend</option>
+                        <option value="Backend & DevOps">Backend & DevOps</option>
+                        <option value="Python & Automation">Python & Automation</option>
+                        <option value="Security">Security</option>
+                        <option value="Mobile">Mobile</option>
+                        <option value="Data & Science">Data & Science</option>
+                        <option value="Lainnya">Lainnya</option>
+                    </select>
+                </div>
+
+                <!-- Filter Status -->
+                <div class="md:col-span-2">
+                    <select id="filter-status" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 focus:border-cyan-500 rounded-xl text-sm text-slate-200 outline-none transition cursor-pointer">
+                        <option value="ALL">Semua Status</option>
+                        <option value="Belum Dicoba">Belum Dicoba</option>
+                        <option value="Sedang Dipelajari">Sedang Dipelajari</option>
+                        <option value="Wajib Pakai">Wajib Pakai</option>
+                        <option value="Arsip">Arsip</option>
+                    </select>
+                </div>
+
+                <!-- Urutkan -->
+                <div class="md:col-span-2">
+                    <select id="sort-by" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 focus:border-cyan-500 rounded-xl text-sm text-slate-200 outline-none transition cursor-pointer">
+                        <option value="newest">Terbaru Disimpan</option>
+                        <option value="rating-desc">Rating Tertinggi</option>
+                        <option value="stars-desc">Stars GitHub Terbanyak</option>
+                        <option value="name-asc">Nama (A - Z)</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- Grid Kartu Repositori -->
+        <section id="repo-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <!-- Kartu akan di-render melalui JavaScript -->
+        </section>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden flex-col items-center justify-center text-center py-16 px-4 bg-slate-900/30 border border-dashed border-slate-800 rounded-3xl">
+            <div class="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500 mb-4">
+                <i class="fa-solid fa-folder-open text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-white">Tidak ada repositori ditemukan</h3>
+            <p class="text-sm text-slate-400 max-w-md mt-1 mb-5">Coba ubah kata kunci pencarian, reset filter, atau klik tombol "Simpan Repo" untuk menempelkan link GitHub.</p>
+            <button onclick="resetFilters()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-sm font-medium text-cyan-400 transition">
+                Reset Semua Filter
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-900 py-5 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+            <p>RepoVault &bull; Auto-Fetch Metadata via GitHub REST API &bull; Tersimpan di <code class="text-slate-400">localStorage</code>.</p>
+            <p>Gunakan <span class="text-cyan-400 font-medium">Backup JSON</span> untuk mencadangkan datamu lintas perangkat.</p>
+        </div>
+    </footer>
+
+    <!-- Modal Form Tambah / Edit Repo -->
+    <div id="repo-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-slate-950/80 transition-opacity" onclick="closeModal()"></div>
+
+        <div class="flex min-h-full items-center justify-center p-4">
+            <div class="relative w-full max-w-xl rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-6 animate-fade-in">
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-cyan-400">
+                            <i class="fa-solid fa-link"></i>
+                        </div>
+                        <div>
+                            <h3 id="modal-title" class="text-lg font-bold text-white">Simpan Repositori Baru</h3>
+                            <p class="text-[11px] text-slate-400">Tempel link GitHub, sistem akan mengambil info & kategori otomatis</p>
+                        </div>
+                    </div>
+                    <button onclick="closeModal()" aria-label="Tutup" class="w-8 h-8 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 flex items-center justify-center transition">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Form -->
+                <form id="repo-form" onsubmit="handleFormSubmit(event)" class="mt-5 space-y-4">
+                    <input type="hidden" id="repo-id">
+                    <input type="hidden" id="repo-stars" value="0">
+                    <input type="hidden" id="repo-language" value="">
+                    <input type="hidden" id="repo-topics" value="[]">
+
+                    <!-- Input URL GitHub -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label for="repo-url" class="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+                                URL GitHub <span class="text-rose-500">*</span>
+                            </label>
+                            <button type="button" id="refetch-btn" onclick="triggerManualFetch()" class="hidden text-[11px] text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-medium">
+                                <i class="fa-solid fa-rotate"></i> Fetch Ulang API
+                            </button>
+                        </div>
+                        <div class="relative">
+                            <input type="url" id="repo-url" required placeholder="https://github.com/owner/nama-repo" 
+                                oninput="handleUrlInput(this.value)"
+                                class="w-full pl-3.5 pr-10 py-2.5 bg-slate-950 border border-slate-800 focus:border-cyan-500 rounded-xl text-sm font-mono text-cyan-300 placeholder-slate-600 outline-none transition">
+                            <div id="fetch-spinner" class="hidden absolute right-3.5 top-1/2 -translate-y-1/2 text-cyan-400">
+                                <i class="fa-solid fa-circle-notch fa-spin text-sm"></i>
+                            </div>
+                        </div>
+                        <!-- Status Auto-Fetch -->
+                        <div id="url-extract-hint" class="text-[11px] text-slate-500 mt-1.5 flex items-center gap-1.5 min-h-[18px]">
+                            <i class="fa-solid fa-circle-info text-slate-600"></i>
+                            <span>Tempel link GitHub untuk deteksi otomatis nama, deskripsi, stars & kategori.</span>
+                        </div>
+                    </div>
+
+                    <!-- Preview Metadata GitHub (Muncul jika berhasil fetch) -->
+                    <div id="api-meta-preview" class="hidden rounded-xl bg-slate-950/90 border border-cyan-500/25 p-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <div class="flex items-center gap-3">
+                            <span id="preview-stars" class="inline-flex items-center gap-1 text-amber-400 font-mono font-semibold">
+                                <i class="fa-solid fa-star"></i> 0
+                            </span>
+                            <span id="preview-lang" class="inline-flex items-center gap-1.5 text-slate-300 font-mono">
+                                <span class="w-2 h-2 rounded-full bg-cyan-400"></span> -
+                            </span>
+                        </div>
+                        <span id="preview-auto-cat" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700 font-medium">
+                            Auto-Kategori Aktif
+                        </span>
+                    </div>
+
+                    <!-- Judul / Nama Repo -->
+                    <div>
+                        <label for="repo-name" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+                            Nama Repositori <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="text" id="repo-name" required placeholder="owner/nama-repo" 
+                            class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 focus:border-cyan-500 rounded-xl text-sm font-mono text-white placeholder-slate-600 outline-none transition">
+                    </div>
+
+                    <!-- Grid Kategori & Status -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="repo-category" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+                                Kategori <span class="text-[10px] font-normal text-cyan-400 normal-case">(Otomatis / Manual)</span>
+                            </label>
+                            <select id="repo-category" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 focus:border-cyan-500 rounded-xl text-sm text-slate-200 outline-none transition">
+                                <option value="AI & Agents">AI & Agents</option>
+                                <option value="Web & Frontend">Web & Frontend</option>
+                                <option value="Backend & DevOps">Backend & DevOps</option>
+                                <option value="Python & Automation">Python & Automation</option>
+                                <option value="Security">Security</option>
+                                <option value="Mobile">Mobile</option>
+                                <option value="Data & Science">Data & Science</option>
+                                <option value="Lainnya">Lainnya</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="repo-status" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Status Prioritas</label>
+                            <select id="repo-status" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 focus:border-cyan-500 rounded-xl text-sm text-slate-200 outline-none transition">
+                                <option value="Belum Dicoba">Belum Dicoba</option>
+                                <option value="Sedang Dipelajari">Sedang Dipelajari</option>
+                                <option value="Wajib Pakai">Wajib Pakai</option>
+                                <option value="Arsip">Arsip</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Rating Pribadi Interaktif (1 - 10) -->
+                    <div class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3.5">
+                        <div class="flex items-center justify-between mb-2">
+                            <label for="repo-rating" class="text-xs font-semibold uppercase tracking-wider text-slate-400">Rating Pribadi (1 - 10)</label>
+                            <span id="rating-display" class="px-2.5 py-0.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-mono text-xs font-bold">8.0 / 10</span>
+                        </div>
+                        
+                        <!-- Bintang Cepat (1-10) -->
+                        <div id="modal-star-buttons" class="flex items-center justify-between gap-1 mb-2.5">
+                            <!-- Di-render via JS -->
+                        </div>
+
+                        <input type="range" id="repo-rating" min="1" max="10" step="0.5" value="8" 
+                            oninput="syncModalRating(this.value)"
+                            class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer">
+                        <div class="flex justify-between text-[10px] text-slate-500 font-mono mt-1.5">
+                            <span>1.0 (Skip)</span>
+                            <span>5.5 (Lumayan)</span>
+                            <span>10.0 (Masterpiece)</span>
+                        </div>
+                    </div>
+
+                    <!-- Catatan Singkat -->
+                    <div>
+                        <label for="repo-notes" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+                            Deskripsi & Catatan Pribadi
+                        </label>
+                        <textarea id="repo-notes" rows="3" placeholder="Deskripsi repo akan terisi otomatis dari GitHub. Kamu juga bisa menambahkan catatan sendiri di sini..." 
+                            class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 focus:border-cyan-500 rounded-xl text-sm text-slate-200 placeholder-slate-600 outline-none transition resize-none"></textarea>
+                    </div>
+
+                    <!-- Opsi Otomatis Star di GitHub -->
+                    <div id="auto-star-option-box" class="flex items-center justify-between p-3 rounded-xl bg-slate-950/90 border border-slate-800/90">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-400">
+                                <i class="fa-solid fa-star text-xs"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs font-semibold text-slate-200">Otomatis Star di GitHub</p>
+                                <p id="auto-star-subtext" class="text-[11px] text-slate-500">Hubungkan token GitHub untuk mengaktifkan auto-star</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="repo-auto-star" class="sr-only peer">
+                            <div class="w-10 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
+                        </label>
+                    </div>
+
+                    <!-- Modal Footer Buttons -->
+                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium transition">
+                            Batal
+                        </button>
+                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-semibold transition">
+                            Simpan ke Vault
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Popover Quick Rating di Kartu -->
+    <div id="quick-rating-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-slate-950/70" onclick="closeQuickRatingModal()"></div>
+        <div class="flex min-h-full items-center justify-center p-4">
+            <div class="relative w-full max-w-sm rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl p-5 animate-fade-in">
+                <div class="flex items-center justify-between mb-3">
+                    <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-star text-amber-400"></i> Ubah Rating Repo
+                    </h4>
+                    <button onclick="closeQuickRatingModal()" aria-label="Tutup" class="text-slate-400 hover:text-white">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <p id="qr-repo-name" class="text-xs font-mono text-cyan-400 truncate mb-4"></p>
+                
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs text-slate-400">Skor Baru:</span>
+                    <span id="qr-value-display" class="text-base font-mono font-bold text-emerald-400">8.0 / 10</span>
+                </div>
+                <input type="range" id="qr-slider" min="1" max="10" step="0.5" value="8"
+                    oninput="document.getElementById('qr-value-display').textContent = parseFloat(this.value).toFixed(1) + ' / 10'"
+                    class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer mb-4">
+                
+                <div class="grid grid-cols-5 gap-1.5 mb-4">
+                    <button type="button" onclick="setQuickRatingPreset(5)" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-mono text-slate-300">5.0</button>
+                    <button type="button" onclick="setQuickRatingPreset(7)" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-mono text-slate-300">7.0</button>
+                    <button type="button" onclick="setQuickRatingPreset(8)" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-mono text-cyan-300">8.0</button>
+                    <button type="button" onclick="setQuickRatingPreset(9)" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-mono text-emerald-300">9.0</button>
+                    <button type="button" onclick="setQuickRatingPreset(10)" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-mono text-amber-300">10</button>
+                </div>
+
+                <button type="button" id="qr-save-btn" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm transition">
+                    Simpan Rating
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Konfirmasi Hapus -->
+    <div id="delete-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-slate-950/80" onclick="closeDeleteModal()"></div>
+        <div class="flex min-h-full items-center justify-center p-4">
+            <div class="relative w-full max-w-sm rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-6 text-center animate-fade-in">
+                <div class="w-12 h-12 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center mx-auto mb-4">
+                    <i class="fa-solid fa-trash-can text-lg"></i>
+                </div>
+                <h3 class="text-lg font-bold text-white">Hapus Repositori?</h3>
+                <p class="text-sm text-slate-400 mt-1.5">Data <span id="delete-repo-name" class="text-slate-200 font-mono font-medium"></span> akan dihapus permanen dari daftar.</p>
+                <div class="flex items-center justify-center gap-3 mt-6">
+                    <button onclick="closeDeleteModal()" class="flex-1 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium transition">Batal</button>
+                    <button id="confirm-delete-btn" class="flex-1 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-sm font-semibold transition">Ya, Hapus</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Pengaturan GitHub PAT, Cloud Gist Sync & Stars -->
+    <div id="github-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-slate-950/80" onclick="closeGitHubModal()"></div>
+        <div class="flex min-h-full items-center justify-center p-4">
+            <div class="relative w-full max-w-xl rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-6 animate-fade-in">
+                <!-- Header -->
+                <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-white">
+                            <i class="fa-brands fa-github text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">GitHub Cloud Sync & Auto-Star</h3>
+                            <p class="text-xs text-slate-400">Simpan database ke Secret Gist & kelola Star langsung</p>
+                        </div>
+                    </div>
+                    <button onclick="closeGitHubModal()" aria-label="Tutup" class="w-8 h-8 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 flex items-center justify-center transition">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="mt-5 space-y-5">
+                    <!-- Status Profil Terhubung -->
+                    <div id="gh-profile-card" class="hidden rounded-xl bg-emerald-500/10 border border-emerald-500/30 p-3.5 flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <img id="gh-avatar" src="" alt="Avatar GitHub" class="w-10 h-10 rounded-full border border-emerald-400/50 bg-slate-800">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <p id="gh-username" class="text-sm font-bold text-white">@username</p>
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Terhubung</span>
+                                </div>
+                                <p id="gh-gist-status" class="text-[11px] text-slate-400 mt-0.5">Siap untuk sinkronisasi Gist & Auto-Star</p>
+                            </div>
+                        </div>
+                        <button onclick="disconnectGitHub()" class="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/25 text-xs font-medium transition">
+                            Putuskan
+                        </button>
+                    </div>
+
+                    <!-- Input Token PAT -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label for="gh-pat-input" class="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                                GitHub Personal Access Token (PAT)
+                            </label>
+                            <a href="https://github.com/settings/tokens/new?description=RepoVault%20Sync&scopes=gist,public_repo" target="_blank" rel="noopener noreferrer" 
+                                class="text-[11px] text-cyan-400 hover:text-cyan-300 hover:underline flex items-center gap-1">
+                                <span>Buat Token Baru di GitHub</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                            </a>
+                        </div>
+                        <div class="flex gap-2">
+                            <div class="relative flex-1">
+                                <input type="password" id="gh-pat-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" 
+                                    class="w-full pl-3.5 pr-10 py-2.5 bg-slate-950 border border-slate-800 focus:border-cyan-500 rounded-xl text-sm font-mono text-cyan-300 placeholder-slate-600 outline-none transition">
+                                <button type="button" onclick="togglePatVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                                    <i id="gh-pat-eye" class="fa-regular fa-eye text-xs"></i>
+                                </button>
+                            </div>
+                            <button type="button" onclick="verifyAndSaveToken()" id="gh-verify-btn" class="px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs sm:text-sm font-semibold transition flex items-center gap-2 shrink-0">
+                                <i class="fa-solid fa-plug"></i>
+                                <span>Hubungkan</span>
+                            </button>
+                        </div>
+                        <!-- Panduan Scope -->
+                        <div class="mt-2 p-2.5 rounded-xl bg-slate-950/80 border border-slate-800/80 text-[11px] text-slate-400 space-y-1">
+                            <p class="font-semibold text-slate-300"><i class="fa-solid fa-shield-halved text-slate-400 mr-1"></i> Izin (Scopes) yang dibutuhkan:</p>
+                            <ul class="list-disc list-inside space-y-0.5 text-slate-400 ml-1">
+                                <li><code class="text-cyan-300 bg-slate-900 px-1 rounded">gist</code> : Menyimpan & memperbarui file backup pribadi (<code class="text-slate-300">repovault-data.json</code>) di Secret Gist.</li>
+                                <li><code class="text-amber-300 bg-slate-900 px-1 rounded">public_repo</code> : Memberi & menghapus tanda <strong>Star</strong> langsung pada repositori GitHub.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Kontrol Cloud Sync (Gist) -->
+                    <div class="pt-3 border-t border-slate-800 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Cloud Sync via Secret GitHub Gist</h4>
+                                <p id="gh-last-sync-label" class="text-[11px] text-slate-500 mt-0.5">Belum pernah disinkronkan</p>
+                            </div>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <span class="text-xs text-slate-400">Auto-Sync</span>
+                                <input type="checkbox" id="gh-auto-sync-toggle" onchange="toggleAutoSync(this.checked)" class="sr-only peer">
+                                <div class="relative w-9 h-5 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                            </label>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <button type="button" onclick="pushToGist(false)" id="btn-push-gist" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-cyan-300 text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                                <span>Push ke Cloud (Gist)</span>
+                            </button>
+                            <button type="button" onclick="pullFromGist()" id="btn-pull-gist" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-purple-300 text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-cloud-arrow-down"></i>
+                                <span>Pull dari Cloud (Gist)</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Impor GitHub Stars -->
+                    <div class="pt-3 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                            <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Sinkronisasi Riwayat GitHub Stars</h4>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Tarik repositori yang sudah pernah kamu Star di GitHub ke RepoVault</p>
+                        </div>
+                        <button type="button" onclick="importFromGitHubStars()" id="btn-import-stars" class="px-4 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-xs font-semibold transition flex items-center justify-center gap-2 shrink-0">
+                            <i class="fa-solid fa-star"></i>
+                            <span>Import GitHub Stars</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        const STORAGE_KEY = 'repovault_items_v2';
+        const GH_CONFIG_KEY = 'repovault_gh_config_v1';
+        const GIST_FILENAME = 'repovault-data.json';
+
+        // Pre-populated contoh repo termasuk msitarzewski/agency-agents
+        const DEFAULT_REPOS = [
+            {
+                id: 'repo-1',
+                url: 'https://github.com/msitarzewski/agency-agents',
+                name: 'msitarzewski/agency-agents',
+                category: 'AI & Agents',
+                status: 'Sedang Dipelajari',
+                rating: 7.5,
+                stars: 14200,
+                language: 'Shell',
+                topics: ['ai-agents', 'claude-code', 'cursor', 'prompts'],
+                notes: 'Kumpulan ratusan prompt & persona agen AI siap pakai untuk Claude Code, Cursor, dan Gemini CLI. Ekosistem integrasinya solid (7.5/10), namun banyak persona gimmick yang perlu dipangkas, cukup ambil 5-10 agen inti saja.',
+                createdAt: Date.now() - 3600000 * 2
+            },
+            {
+                id: 'repo-2',
+                url: 'https://github.com/shadcn-ui/ui',
+                name: 'shadcn-ui/ui',
+                category: 'Web & Frontend',
+                status: 'Wajib Pakai',
+                rating: 9.5,
+                stars: 82500,
+                language: 'TypeScript',
+                topics: ['react', 'tailwindcss', 'ui', 'components'],
+                notes: 'Koleksi komponen UI modern berbasis Radix UI & Tailwind CSS. Sangat fleksibel karena kodenya langsung di-copy ke project sehingga kontrol penuh ada di tangan developer.',
+                createdAt: Date.now() - 3600000 * 24
+            },
+            {
+                id: 'repo-3',
+                url: 'https://github.com/unclecode/crawl4ai',
+                name: 'unclecode/crawl4ai',
+                category: 'Python & Automation',
+                status: 'Belum Dicoba',
+                rating: 8.5,
+                stars: 34800,
+                language: 'Python',
+                topics: ['crawler', 'llm', 'rag', 'scraping'],
+                notes: 'Open-source LLM-friendly web crawler & scraper. Mengubah halaman web kompleks menjadi Markdown bersih untuk kebutuhan pipeline RAG dan AI agent.',
+                createdAt: Date.now() - 3600000 * 48
+            }
+        ];
+
+        // State Aplikasi
+        let repos = [];
+        let deleteTargetId = null;
+        let fetchDebounceTimer = null;
+        let lastFetchedRepoKey = '';
+        let ghConfig = {
+            token: '',
+            user: null,
+            gistId: '',
+            autoSync: true,
+            lastSync: null
+        };
+        let starredSet = new Set(); // Menyimpan "owner/repo" lowercase yang di-star oleh user
+
+        // Inisialisasi saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', async () => {
+            loadData();
+            loadGhConfig();
+            renderModalStarButtons(8);
+            setupEventListeners();
+            renderAll();
+            updateGitHubUIState();
+
+            if (ghConfig.token) {
+                await validateTokenSilently();
+                await syncUserStarredStatus();
+            }
+        });
+
+        // Memuat konfigurasi GitHub dari localStorage
+        function loadGhConfig() {
+            try {
+                const raw = localStorage.getItem(GH_CONFIG_KEY);
+                if (raw) {
+                    ghConfig = { ...ghConfig, ...JSON.parse(raw) };
+                }
+            } catch (e) {
+                console.error('Gagal memuat konfigurasi GitHub:', e);
+            }
+        }
+
+        function saveGhConfig() {
+            try {
+                localStorage.setItem(GH_CONFIG_KEY, JSON.stringify(ghConfig));
+            } catch (e) {
+                console.error('Gagal menyimpan konfigurasi GitHub:', e);
+            }
+        }
+
+        // Memuat data dari localStorage
+        function loadData() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    repos = JSON.parse(raw);
+                } else {
+                    repos = [...DEFAULT_REPOS];
+                    saveData(true);
+                }
+            } catch (e) {
+                console.error('Gagal memuat data:', e);
+                repos = [...DEFAULT_REPOS];
+            }
+        }
+
+        // Menyiapkan semua event listener untuk pencarian, filter, dan modal
+        function setupEventListeners() {
+            const searchInput = document.getElementById('search-input');
+            const clearBtn = document.getElementById('clear-search-btn');
+
+            searchInput.addEventListener('input', () => {
+                if (searchInput.value.trim().length > 0) {
+                    clearBtn.classList.remove('hidden');
+                } else {
+                    clearBtn.classList.add('hidden');
+                }
+                renderGrid();
+            });
+
+            document.getElementById('filter-category').addEventListener('change', renderGrid);
+            document.getElementById('filter-status').addEventListener('change', renderGrid);
+            document.getElementById('sort-by').addEventListener('change', renderGrid);
+
+            // Tutup dropdown backup jika klik di luar area
+            document.addEventListener('click', (e) => {
+                const wrapper = document.getElementById('backup-dropdown-wrapper');
+                const menu = document.getElementById('backup-menu');
+                if (wrapper && menu && !wrapper.contains(e.target)) {
+                    menu.classList.add('hidden');
+                }
+            });
+
+            // Tutup modal dengan tombol Escape
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeModal();
+                    closeDeleteModal();
+                    closeQuickRatingModal();
+                    closeGitHubModal();
+                }
+            });
+        }
+
+        // Menyimpan data ke localStorage (+ Auto-Sync ke Gist jika aktif)
+        function saveData(skipAutoSync = false) {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(repos));
+                if (!skipAutoSync && ghConfig.token && ghConfig.autoSync) {
+                    pushToGist(true);
+                }
+            } catch (e) {
+                showToast('Gagal menyimpan ke penyimpanan lokal browser.', 'error');
+            }
+        }
+
+        // =========================================================================
+        // INTEGRASI GITHUB PAT, CLOUD GIST SYNC & GITHUB STARS
+        // =========================================================================
+
+        function getGitHubHeaders() {
+            const headers = {
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json'
+            };
+            if (ghConfig.token) {
+                headers['Authorization'] = `Bearer ${ghConfig.token}`;
+            }
+            return headers;
+        }
+
+        function openGitHubModal() {
+            document.getElementById('gh-pat-input').value = ghConfig.token || '';
+            document.getElementById('gh-auto-sync-toggle').checked = !!ghConfig.autoSync;
+            updateGitHubUIState();
+            document.getElementById('github-modal').classList.remove('hidden');
+        }
+
+        function closeGitHubModal() {
+            document.getElementById('github-modal').classList.add('hidden');
+        }
+
+        function togglePatVisibility() {
+            const input = document.getElementById('gh-pat-input');
+            const eye = document.getElementById('gh-pat-eye');
+            if (input.type === 'password') {
+                input.type = 'text';
+                eye.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                eye.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+        function toggleAutoSync(enabled) {
+            ghConfig.autoSync = enabled;
+            saveGhConfig();
+            showToast(enabled ? 'Auto-Sync Gist diaktifkan.' : 'Auto-Sync Gist dimatikan.', 'info');
+        }
+
+        function updateGitHubUIState() {
+            const dot = document.getElementById('gh-status-dot');
+            const btnLabel = document.getElementById('gh-btn-label');
+            const profileCard = document.getElementById('gh-profile-card');
+            const lastSyncLabel = document.getElementById('gh-last-sync-label');
+
+            if (ghConfig.token && ghConfig.user) {
+                dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+                btnLabel.textContent = `@${ghConfig.user.login}`;
+                profileCard.classList.remove('hidden');
+                document.getElementById('gh-avatar').src = ghConfig.user.avatar_url;
+                document.getElementById('gh-username').textContent = `@${ghConfig.user.login}`;
+                document.getElementById('gh-gist-status').textContent = ghConfig.gistId 
+                    ? `Gist ID: ${ghConfig.gistId.slice(0, 10)}...` 
+                    : 'Gist backup akan dibuat otomatis saat Push pertama';
+            } else {
+                dot.className = 'w-2 h-2 rounded-full bg-slate-500';
+                btnLabel.textContent = 'GitHub Sync';
+                profileCard.classList.add('hidden');
+            }
+
+            if (ghConfig.lastSync) {
+                const dateStr = new Date(ghConfig.lastSync).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+                lastSyncLabel.textContent = `Sinkronisasi terakhir: ${dateStr}`;
+            } else {
+                lastSyncLabel.textContent = 'Belum pernah disinkronkan';
+            }
+        }
+
+        async function verifyAndSaveToken() {
+            const tokenInput = document.getElementById('gh-pat-input').value.trim();
+            if (!tokenInput) {
+                showToast('Masukkan GitHub Personal Access Token terlebih dahulu.', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('gh-verify-btn');
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> <span>Memvalidasi...</span>`;
+
+            try {
+                const res = await fetch('https://api.github.com/user', {
+                    headers: {
+                        'Authorization': `Bearer ${tokenInput}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+
+                if (!res.ok) {
+                    throw new Error('Token tidak valid atau kedaluwarsa.');
+                }
+
+                const userData = await res.json();
+                ghConfig.token = tokenInput;
+                ghConfig.user = {
+                    login: userData.login,
+                    avatar_url: userData.avatar_url,
+                    name: userData.name
+                };
+                saveGhConfig();
+                updateGitHubUIState();
+                showToast(`Berhasil terhubung sebagai @${userData.login}!`, 'success');
+
+                await syncUserStarredStatus();
+                renderGrid();
+            } catch (err) {
+                showToast(err.message || 'Gagal menghubungkan ke GitHub.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        }
+
+        async function validateTokenSilently() {
+            try {
+                const res = await fetch('https://api.github.com/user', { headers: getGitHubHeaders() });
+                if (res.ok) {
+                    const userData = await res.json();
+                    ghConfig.user = {
+                        login: userData.login,
+                        avatar_url: userData.avatar_url,
+                        name: userData.name
+                    };
+                    saveGhConfig();
+                    updateGitHubUIState();
+                }
+            } catch (e) {
+                console.warn('Validasi token background gagal:', e);
+            }
+        }
+
+        function disconnectGitHub() {
+            ghConfig = { token: '', user: null, gistId: '', autoSync: true, lastSync: null };
+            starredSet.clear();
+            saveGhConfig();
+            document.getElementById('gh-pat-input').value = '';
+            updateGitHubUIState();
+            renderGrid();
+            showToast('Koneksi akun GitHub diputuskan.', 'info');
+        }
+
+        // Mencari Gist milik user yang memiliki file repovault-data.json
+        async function findExistingRepoVaultGist() {
+            if (ghConfig.gistId) {
+                const checkRes = await fetch(`https://api.github.com/gists/${ghConfig.gistId}`, { headers: getGitHubHeaders() });
+                if (checkRes.ok) return ghConfig.gistId;
+            }
+
+            const listRes = await fetch('https://api.github.com/gists?per_page=50', { headers: getGitHubHeaders() });
+            if (!listRes.ok) throw new Error('Gagal membaca daftar Gist dari GitHub.');
+            const gists = await listRes.json();
+            const found = gists.find(g => g.files && g.files[GIST_FILENAME]);
+            if (found) {
+                ghConfig.gistId = found.id;
+                saveGhConfig();
+                return found.id;
+            }
+            return null;
+        }
+
+        // Push data lokal ke Secret GitHub Gist
+        async function pushToGist(silent = false) {
+            if (!ghConfig.token) {
+                if (!silent) showToast('Hubungkan GitHub Token terlebih dahulu.', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('btn-push-gist');
+            const origHtml = btn ? btn.innerHTML : '';
+            if (btn && !silent) {
+                btn.disabled = true;
+                btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> <span>Menyimpan...</span>`;
+            }
+
+            try {
+                const existingId = await findExistingRepoVaultGist();
+                const payload = {
+                    description: 'RepoVault Cloud Backup: Daftar Repositori GitHub Terkurasi',
+                    public: false,
+                    files: {
+                        [GIST_FILENAME]: {
+                            content: JSON.stringify({
+                                updatedAt: new Date().toISOString(),
+                                count: repos.length,
+                                repos: repos
+                            }, null, 2)
+                        }
+                    }
+                };
+
+                const url = existingId 
+                    ? `https://api.github.com/gists/${existingId}` 
+                    : 'https://api.github.com/gists';
+                const method = existingId ? 'PATCH' : 'POST';
+
+                const res = await fetch(url, {
+                    method,
+                    headers: getGitHubHeaders(),
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) throw new Error(`Gagal menyimpan Gist (HTTP ${res.status}). Pastikan scope 'gist' aktif.`);
+
+                const result = await res.json();
+                ghConfig.gistId = result.id;
+                ghConfig.lastSync = Date.now();
+                saveGhConfig();
+                updateGitHubUIState();
+
+                if (!silent) showToast('Database berhasil di-Push ke Secret GitHub Gist!', 'success');
+            } catch (err) {
+                if (!silent) showToast(err.message, 'error');
+            } finally {
+                if (btn && !silent) {
+                    btn.disabled = false;
+                    btn.innerHTML = origHtml;
+                }
+            }
+        }
+
+        // Pull data dari Secret GitHub Gist dan gabungkan dengan data lokal
+        async function pullFromGist() {
+            if (!ghConfig.token) {
+                showToast('Hubungkan GitHub Token terlebih dahulu.', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('btn-pull-gist');
+            const origHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> <span>Menarik Data...</span>`;
+
+            try {
+                const existingId = await findExistingRepoVaultGist();
+                if (!existingId) {
+                    throw new Error('Belum ditemukan backup Gist (repovault-data.json) di akun GitHub-mu.');
+                }
+
+                const res = await fetch(`https://api.github.com/gists/${existingId}`, { headers: getGitHubHeaders() });
+                if (!res.ok) throw new Error('Gagal mengunduh data dari Gist.');
+
+                const gistData = await res.json();
+                const fileObj = gistData.files && gistData.files[GIST_FILENAME];
+                if (!fileObj || !fileObj.content) {
+                    throw new Error('Isi file repovault-data.json kosong atau rusak.');
+                }
+
+                const parsed = JSON.parse(fileObj.content);
+                const cloudRepos = Array.isArray(parsed) ? parsed : (parsed.repos || []);
+
+                // Merge cerdas berdasarkan nama repositori (lowercase)
+                const localMap = new Map(repos.map(r => [r.name.toLowerCase(), r]));
+                let addedCount = 0;
+                let updatedCount = 0;
+
+                cloudRepos.forEach(cRepo => {
+                    const key = (cRepo.name || '').toLowerCase();
+                    if (!key) return;
+                    if (!localMap.has(key)) {
+                        localMap.set(key, cRepo);
+                        addedCount++;
+                    } else {
+                        // Versi cloud menang untuk repo yang sama (cloud adalah hasil push terakhir)
+                        localMap.set(key, { ...localMap.get(key), ...cRepo });
+                        updatedCount++;
+                    }
+                });
+
+                repos = Array.from(localMap.values()).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                ghConfig.lastSync = Date.now();
+                saveGhConfig();
+                saveData(true); // Simpan lokal tanpa memicu push ulang langsung
+                updateGitHubUIState();
+                renderAll();
+
+                showToast(`Cloud Sync selesai: +${addedCount} repo baru, ${updatedCount} diperbarui!`, 'success');
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+            }
+        }
+
+        // Ambil daftar repositori yang sedang di-star oleh user (halaman pertama 100 repo)
+        async function syncUserStarredStatus() {
+            if (!ghConfig.token) return;
+            try {
+                const res = await fetch('https://api.github.com/user/starred?per_page=100', { headers: getGitHubHeaders() });
+                if (res.ok) {
+                    const list = await res.json();
+                    starredSet = new Set(list.map(item => item.full_name.toLowerCase()));
+                }
+            } catch (e) {
+                console.warn('Gagal sinkronisasi status star:', e);
+            }
+        }
+
+        // Toggle Star / Unstar langsung ke API GitHub
+        async function toggleGitHubStar(repoId) {
+            if (!ghConfig.token) {
+                showToast('Hubungkan GitHub Token dulu untuk memberi Star langsung!', 'info');
+                openGitHubModal();
+                return;
+            }
+
+            const repo = repos.find(r => r.id === repoId);
+            if (!repo) return;
+
+            const parsed = parseGitHubUrl(repo.url);
+            if (!parsed) {
+                showToast('URL repositori tidak valid.', 'error');
+                return;
+            }
+
+            const key = parsed.fullName.toLowerCase();
+            const isCurrentlyStarred = starredSet.has(key);
+            const method = isCurrentlyStarred ? 'DELETE' : 'PUT';
+
+            // Optimistic UI update
+            if (isCurrentlyStarred) {
+                starredSet.delete(key);
+                if (repo.stars > 0) repo.stars -= 1;
+            } else {
+                starredSet.add(key);
+                repo.stars = (repo.stars || 0) + 1;
+            }
+            renderGrid();
+
+            try {
+                const res = await fetch(`https://api.github.com/user/starred/${encodeURIComponent(parsed.owner)}/${encodeURIComponent(parsed.repo)}`, {
+                    method,
+                    headers: {
+                        'Authorization': `Bearer ${ghConfig.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+
+                if (res.status === 204) {
+                    saveData();
+                    showToast(
+                        isCurrentlyStarred 
+                            ? `Unstar ${parsed.fullName} di GitHub.` 
+                            : `Berhasil Star ${parsed.fullName} di akun GitHub-mu!`,
+                        isCurrentlyStarred ? 'info' : 'success'
+                    );
+                } else {
+                    throw new Error(`HTTP ${res.status}: pastikan token memiliki izin 'public_repo'.`);
+                }
+            } catch (err) {
+                // Rollback jika gagal
+                if (isCurrentlyStarred) {
+                    starredSet.add(key);
+                    repo.stars = (repo.stars || 0) + 1;
+                } else {
+                    starredSet.delete(key);
+                    if (repo.stars > 0) repo.stars -= 1;
+                }
+                renderGrid();
+                showToast(`Gagal mengubah status Star: ${err.message}`, 'error');
+            }
+        }
+
+        // Helper untuk memberi Star saat menyimpan repo baru
+        async function starRepoOnGitHubSilently(url) {
+            if (!ghConfig.token) return;
+            const parsed = parseGitHubUrl(url);
+            if (!parsed) return;
+
+            try {
+                const res = await fetch(`https://api.github.com/user/starred/${encodeURIComponent(parsed.owner)}/${encodeURIComponent(parsed.repo)}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${ghConfig.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                if (res.status === 204) {
+                    starredSet.add(parsed.fullName.toLowerCase());
+                    renderGrid();
+                    showToast(`Otomatis di-Star di GitHub: ${parsed.fullName}`, 'success');
+                }
+            } catch (e) {
+                console.warn('Auto-star gagal:', e);
+            }
+        }
+
+        // Impor daftar repositori yang sudah pernah di-star di akun GitHub pengguna
+        async function importFromGitHubStars() {
+            document.getElementById('backup-menu').classList.add('hidden');
+            if (!ghConfig.token) {
+                showToast('Hubungkan GitHub Token terlebih dahulu untuk mengimpor Stars.', 'info');
+                openGitHubModal();
+                return;
+            }
+
+            const btn = document.getElementById('btn-import-stars');
+            const origHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> <span>Mengimpor...</span>`;
+            }
+
+            try {
+                const res = await fetch('https://api.github.com/user/starred?per_page=50', { headers: getGitHubHeaders() });
+                if (!res.ok) throw new Error('Gagal mengambil daftar GitHub Stars.');
+
+                const starredList = await res.json();
+                const existingNames = new Set(repos.map(r => r.name.toLowerCase()));
+                let importedCount = 0;
+
+                starredList.forEach(item => {
+                    const fullName = item.full_name;
+                    starredSet.add(fullName.toLowerCase());
+
+                    if (!existingNames.has(fullName.toLowerCase())) {
+                        const topics = Array.isArray(item.topics) ? item.topics : [];
+                        const detectedCat = detectCategoryFromSignals({
+                            name: fullName,
+                            description: item.description || '',
+                            language: item.language || '',
+                            topics
+                        });
+
+                        const topicStr = topics.length > 0 ? `\n\nTopik: ${topics.slice(0, 6).map(t => '#' + t).join(' ')}` : '';
+                        repos.unshift({
+                            id: 'repo-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+                            url: item.html_url,
+                            name: fullName,
+                            category: detectedCat,
+                            status: 'Belum Dicoba',
+                            rating: 8.0,
+                            stars: item.stargazers_count || 0,
+                            language: item.language || '',
+                            topics,
+                            notes: item.description ? `${item.description}${topicStr}` : 'Diimpor dari GitHub Stars.',
+                            createdAt: Date.now() - importedCount * 1000
+                        });
+                        existingNames.add(fullName.toLowerCase());
+                        importedCount++;
+                    }
+                });
+
+                saveData();
+                renderAll();
+                showToast(
+                    importedCount > 0 
+                        ? `Berhasil mengimpor ${importedCount} repositori baru dari GitHub Stars!` 
+                        : 'Semua repositori GitHub Stars terbaru sudah ada di RepoVault.',
+                    'success'
+                );
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = origHtml;
+                }
+            }
+        }
+
+        // =========================================================================
+        // INTELIJENSI AUTO-FETCH & AUTO-CATEGORIZE DARI GITHUB URL
+        // =========================================================================
+
+        function parseGitHubUrl(url) {
+            const match = url.trim().match(/github\.com\/([^\/\s]+)\/([^\/\s?#]+)/i);
+            if (match && match[1] && match[2]) {
+                const owner = match[1];
+                const repo = match[2].replace(/\.git$/i, '');
+                // Abaikan path sistem GitHub seperti github.com/topics/ai atau github.com/orgs/...
+                const reserved = ['topics', 'orgs', 'settings', 'marketplace', 'explore', 'trending', 'collections', 'sponsors'];
+                if (reserved.includes(owner.toLowerCase())) return null;
+                return { owner, repo, fullName: `${owner}/${repo}` };
+            }
+            return null;
+        }
+
+        function handleUrlInput(urlValue) {
+            const parsed = parseGitHubUrl(urlValue);
+            const hint = document.getElementById('url-extract-hint');
+            const nameInput = document.getElementById('repo-name');
+            const refetchBtn = document.getElementById('refetch-btn');
+
+            clearTimeout(fetchDebounceTimer);
+
+            if (!parsed) {
+                refetchBtn.classList.add('hidden');
+                document.getElementById('api-meta-preview').classList.add('hidden');
+                if (urlValue.trim().length > 0) {
+                    hint.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-400"></i> <span class="text-amber-400">Masukkan URL repositori GitHub yang valid (contoh: https://github.com/owner/repo)</span>`;
+                } else {
+                    hint.innerHTML = `<i class="fa-solid fa-circle-info text-slate-600"></i> <span>Tempel link GitHub untuk deteksi otomatis nama, deskripsi, stars & kategori.</span>`;
+                }
+                return;
+            }
+
+            // Isi nama repo secara instan
+            if (!nameInput.dataset.manualEdit) {
+                nameInput.value = parsed.fullName;
+            }
+            refetchBtn.classList.remove('hidden');
+
+            // Jalankan klasifikasi cepat berbasis URL terlebih dahulu sambil menunggu API
+            const quickCat = detectCategoryFromSignals({
+                name: parsed.fullName,
+                description: '',
+                language: '',
+                topics: []
+            });
+            document.getElementById('repo-category').value = quickCat;
+
+            // Debounce pemanggilan GitHub REST API agar tidak spam saat mengetik
+            if (lastFetchedRepoKey !== parsed.fullName) {
+                hint.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-cyan-400"></i> <span class="text-cyan-400">Menghubungi GitHub API untuk <strong>${parsed.fullName}</strong>...</span>`;
+                fetchDebounceTimer = setTimeout(() => {
+                    fetchGitHubMetadata(parsed.owner, parsed.repo);
+                }, 450);
+            }
+        }
+
+        function triggerManualFetch() {
+            const urlValue = document.getElementById('repo-url').value;
+            const parsed = parseGitHubUrl(urlValue);
+            if (parsed) {
+                lastFetchedRepoKey = '';
+                fetchGitHubMetadata(parsed.owner, parsed.repo);
+            }
+        }
+
+        async function fetchGitHubMetadata(owner, repo) {
+            const spinner = document.getElementById('fetch-spinner');
+            const hint = document.getElementById('url-extract-hint');
+            const previewBox = document.getElementById('api-meta-preview');
+            const nameInput = document.getElementById('repo-name');
+            const notesInput = document.getElementById('repo-notes');
+            const categorySelect = document.getElementById('repo-category');
+
+            spinner.classList.remove('hidden');
+
+            try {
+                const headers = { 'Accept': 'application/vnd.github.v3+json' };
+                if (ghConfig.token) {
+                    headers['Authorization'] = `Bearer ${ghConfig.token}`;
+                }
+
+                const response = await fetch(`https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`, {
+                    headers
+                });
+
+                if (!response.ok) {
+                    throw new Error(response.status === 404 ? 'Repositori tidak ditemukan atau bersifat privat.' : `GitHub API Limit/Error (${response.status})`);
+                }
+
+                const data = await response.json();
+                lastFetchedRepoKey = data.full_name;
+
+                // Simpan metadata tersembunyi ke form
+                const stars = data.stargazers_count || 0;
+                const language = data.language || 'Unknown';
+                const topics = Array.isArray(data.topics) ? data.topics : [];
+                const description = data.description || '';
+
+                document.getElementById('repo-stars').value = stars;
+                document.getElementById('repo-language').value = language;
+                document.getElementById('repo-topics').value = JSON.stringify(topics);
+
+                // Isi nama resmi dari API jika belum diedit manual
+                if (!nameInput.dataset.manualEdit) {
+                    nameInput.value = data.full_name;
+                }
+
+                // Tentukan kategori cerdas berdasarkan topics, description, language, & name
+                const detectedCategory = detectCategoryFromSignals({
+                    name: data.full_name,
+                    description,
+                    language,
+                    topics
+                });
+                categorySelect.value = detectedCategory;
+
+                // Isi catatan/deskripsi otomatis jika masih kosong atau belum diedit manual
+                if (!notesInput.dataset.manualEdit && description) {
+                    const topicStr = topics.length > 0 ? `\n\nTopik: ${topics.slice(0, 6).map(t => '#' + t).join(' ')}` : '';
+                    notesInput.value = `${description}${topicStr}`;
+                }
+
+                // Tampilkan Preview Box
+                document.getElementById('preview-stars').innerHTML = `<i class="fa-solid fa-star"></i> ${formatNumber(stars)}`;
+                document.getElementById('preview-lang').innerHTML = `<span class="w-2 h-2 rounded-full ${getLangDotColor(language)}"></span> ${escapeHTML(language)}`;
+                document.getElementById('preview-auto-cat').textContent = `Kategori: ${detectedCategory}`;
+                previewBox.classList.remove('hidden');
+
+                hint.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> <span class="text-emerald-400">Metadata berhasil diambil & dikategorikan ke <strong>${detectedCategory}</strong>!</span>`;
+
+            } catch (err) {
+                // Fallback cerdas menggunakan keyword URL jika offline / rate-limit
+                const fallbackCat = detectCategoryFromSignals({
+                    name: `${owner}/${repo}`,
+                    description: '',
+                    language: '',
+                    topics: []
+                });
+                categorySelect.value = fallbackCat;
+                previewBox.classList.add('hidden');
+                hint.innerHTML = `<i class="fa-solid fa-bolt text-amber-400"></i> <span class="text-amber-300">Mode Offline/Fallback (${escapeHTML(err.message)}). Kategori ditebak dari URL: <strong>${fallbackCat}</strong>.</span>`;
+            } finally {
+                spinner.classList.add('hidden');
+            }
+        }
+
+        // Algoritma Klasifikasi Kategori Cerdas
+        function detectCategoryFromSignals({ name, description, language, topics }) {
+            const lang = (language || '').toLowerCase();
+            const corpus = `${name} ${description} ${(topics || []).join(' ')}`.toLowerCase();
+
+            // 1. AI & Agents
+            const aiKeywords = ['ai', 'llm', 'agent', 'agents', 'gpt', 'claude', 'openai', 'langchain', 'rag', 'prompt', 'machine-learning', 'deep-learning', 'neural', 'transformer', 'diffusion', 'ollama', 'mcp', 'copilot'];
+            if (aiKeywords.some(kw => corpus.includes(kw))) {
+                return 'AI & Agents';
+            }
+
+            // 2. Security
+            const secKeywords = ['security', 'pentest', 'vulnerability', 'exploit', 'ctf', 'malware', 'osint', 'cybersecurity', 'scanner', 'auth', 'oauth', 'firewall', 'encryption', 'audit'];
+            if (secKeywords.some(kw => corpus.includes(kw))) {
+                return 'Security';
+            }
+
+            // 3. Mobile
+            const mobileKeywords = ['android', 'ios', 'flutter', 'react-native', 'swiftui', 'kotlin-multiplatform', 'expo', 'mobile-app'];
+            if (['swift', 'dart', 'objective-c'].includes(lang) || mobileKeywords.some(kw => corpus.includes(kw))) {
+                return 'Mobile';
+            }
+
+            // 4. Web & Frontend
+            const webKeywords = ['react', 'vue', 'svelte', 'nextjs', 'nuxt', 'tailwind', 'css', 'ui', 'frontend', 'component', 'animation', 'threejs', 'webgl', 'astro', 'vite', 'shadcn', 'dashboard'];
+            if (['html', 'css', 'vue', 'svelte'].includes(lang) || webKeywords.some(kw => corpus.includes(kw))) {
+                return 'Web & Frontend';
+            }
+
+            // 5. Data & Science
+            const dataKeywords = ['data-science', 'pandas', 'numpy', 'jupyter', 'visualization', 'analytics', 'dataset', 'bi', 'etl', 'spark', 'bioinformatics', 'gis', 'spatial'];
+            if (['jupyter notebook', 'r', 'julia', 'matlab'].includes(lang) || dataKeywords.some(kw => corpus.includes(kw))) {
+                return 'Data & Science';
+            }
+
+            // 6. Python & Automation
+            const pyAutoKeywords = ['scraper', 'scraping', 'crawler', 'automation', 'bot', 'selenium', 'playwright', 'puppeteer', 'workflow', 'n8n'];
+            if (lang === 'python' || pyAutoKeywords.some(kw => corpus.includes(kw))) {
+                return 'Python & Automation';
+            }
+
+            // 7. Backend & DevOps
+            const backendKeywords = ['docker', 'kubernetes', 'k8s', 'terraform', 'devops', 'backend', 'api', 'graphql', 'grpc', 'microservice', 'database', 'postgres', 'redis', 'linux', 'cli', 'server', 'nginx'];
+            if (['go', 'rust', 'java', 'c#', 'php', 'ruby', 'shell', 'dockerfile', 'c++', 'c'].includes(lang) || backendKeywords.some(kw => corpus.includes(kw))) {
+                return 'Backend & DevOps';
+            }
+
+            // Fallback TS/JS ke Web & Frontend
+            if (['typescript', 'javascript'].includes(lang)) {
+                return 'Web & Frontend';
+            }
+
+            return 'Lainnya';
+        }
+
+        // Tandai input manual agar tidak tertimpa saat re-fetch
+        document.getElementById('repo-name').addEventListener('input', function() {
+            this.dataset.manualEdit = this.value.trim().length > 0 ? 'true' : '';
+        });
+        document.getElementById('repo-notes').addEventListener('input', function() {
+            this.dataset.manualEdit = this.value.trim().length > 0 ? 'true' : '';
+        });
+
+        // =========================================================================
+        // SISTEM RATING BINTANG INTERAKTIF (1 - 10)
+        // =========================================================================
+
+        function renderModalStarButtons(currentRating) {
+            const container = document.getElementById('modal-star-buttons');
+            const val = parseFloat(currentRating) || 0;
+            let html = '';
+            for (let i = 1; i <= 10; i++) {
+                const active = i <= Math.round(val);
+                html += `
+                    <button type="button" onclick="syncModalRating(${i})" title="Beri nilai ${i}/10"
+                        class="flex-1 py-1.5 rounded-lg border text-xs font-mono font-bold transition flex flex-col items-center justify-center gap-0.5 ${
+                            active 
+                            ? 'bg-amber-500/15 border-amber-500/40 text-amber-400' 
+                            : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300 hover:border-slate-700'
+                        }">
+                        <i class="fa-solid fa-star text-[10px]"></i>
+                        <span class="text-[10px]">${i}</span>
+                    </button>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        function syncModalRating(val) {
+            const num = parseFloat(val);
+            document.getElementById('repo-rating').value = num;
+            document.getElementById('rating-display').textContent = `${num.toFixed(1)} / 10`;
+            renderModalStarButtons(num);
+        }
+
+        // Quick Rating langsung dari kartu
+        function openQuickRating(id) {
+            const repo = repos.find(r => r.id === id);
+            if (!repo) return;
+
+            document.getElementById('qr-repo-name').textContent = repo.name;
+            const currentRating = parseFloat(repo.rating) || 7.5;
+            document.getElementById('qr-slider').value = currentRating;
+            document.getElementById('qr-value-display').textContent = `${currentRating.toFixed(1)} / 10`;
+
+            document.getElementById('qr-save-btn').onclick = () => {
+                const newRating = parseFloat(document.getElementById('qr-slider').value);
+                repo.rating = newRating;
+                saveData();
+                renderAll();
+                closeQuickRatingModal();
+                showToast(`Rating ${repo.name} diperbarui menjadi ${newRating.toFixed(1)}/10`, 'success');
+            };
+
+            document.getElementById('quick-rating-modal').classList.remove('hidden');
+        }
+
+        function setQuickRatingPreset(val) {
+            document.getElementById('qr-slider').value = val;
+            document.getElementById('qr-value-display').textContent = `${parseFloat(val).toFixed(1)} / 10`;
+        }
+
+        function closeQuickRatingModal() {
+            document.getElementById('quick-rating-modal').classList.add('hidden');
+        }
+
+        // =========================================================================
+        // RENDER UI & KARTU REPOSITORI
+        // =========================================================================
+
+        function renderAll() {
+            updateStats();
+            renderGrid();
+        }
+
+        function updateStats() {
+            const total = repos.length;
+            const unchecked = repos.filter(r => r.status === 'Belum Dicoba').length;
+            const mustHave = repos.filter(r => r.status === 'Wajib Pakai').length;
+            const avgRating = total > 0 
+                ? (repos.reduce((acc, curr) => acc + (parseFloat(curr.rating) || 0), 0) / total).toFixed(1)
+                : '0.0';
+
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-unchecked').textContent = unchecked;
+            document.getElementById('stat-musthave').textContent = mustHave;
+            document.getElementById('stat-rating').textContent = avgRating;
+        }
+
+        function getStatusBadge(status) {
+            switch (status) {
+                case 'Wajib Pakai':
+                    return 'bg-purple-500/15 text-purple-300 border-purple-500/30';
+                case 'Sedang Dipelajari':
+                    return 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30';
+                case 'Arsip':
+                    return 'bg-slate-800 text-slate-400 border-slate-700';
+                default: // Belum Dicoba
+                    return 'bg-amber-500/15 text-amber-300 border-amber-500/30';
+            }
+        }
+
+        function getRatingColor(rating) {
+            const val = parseFloat(rating) || 0;
+            if (val >= 8.5) return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30 hover:bg-emerald-500/20';
+            if (val >= 6.5) return 'text-cyan-400 bg-cyan-500/10 border-cyan-500/30 hover:bg-cyan-500/20';
+            return 'text-amber-400 bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20';
+        }
+
+        function getLangDotColor(lang) {
+            const l = (lang || '').toLowerCase();
+            if (l.includes('python')) return 'bg-blue-400';
+            if (l.includes('typescript')) return 'bg-sky-400';
+            if (l.includes('javascript')) return 'bg-yellow-400';
+            if (l.includes('rust')) return 'bg-orange-500';
+            if (l.includes('go')) return 'bg-cyan-400';
+            if (l.includes('shell')) return 'bg-emerald-400';
+            return 'bg-slate-400';
+        }
+
+        function formatNumber(num) {
+            if (!num || num === 0) return '0';
+            if (num >= 1000) return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+            return num.toString();
+        }
+
+        function renderMiniStars(rating) {
+            // Konversi skala 10 ke visual 5 bintang (setengah bintang didukung)
+            const outOfFive = (parseFloat(rating) || 0) / 2;
+            let starsHtml = '';
+            for (let i = 1; i <= 5; i++) {
+                if (outOfFive >= i) {
+                    starsHtml += '<i class="fa-solid fa-star text-amber-400 text-[10px]"></i>';
+                } else if (outOfFive >= i - 0.5) {
+                    starsHtml += '<i class="fa-solid fa-star-half-stroke text-amber-400 text-[10px]"></i>';
+                } else {
+                    starsHtml += '<i class="fa-regular fa-star text-slate-600 text-[10px]"></i>';
+                }
+            }
+            return starsHtml;
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById('repo-grid');
+            const emptyState = document.getElementById('empty-state');
+            
+            const query = document.getElementById('search-input').value.toLowerCase().trim();
+            const catFilter = document.getElementById('filter-category').value;
+            const statusFilter = document.getElementById('filter-status').value;
+            const sortBy = document.getElementById('sort-by').value;
+
+            let filtered = repos.filter(repo => {
+                const topicsStr = Array.isArray(repo.topics) ? repo.topics.join(' ').toLowerCase() : '';
+                const langStr = (repo.language || '').toLowerCase();
+                const matchSearch = !query || 
+                    repo.name.toLowerCase().includes(query) || 
+                    (repo.notes && repo.notes.toLowerCase().includes(query)) ||
+                    repo.category.toLowerCase().includes(query) ||
+                    langStr.includes(query) ||
+                    topicsStr.includes(query);
+                const matchCat = catFilter === 'ALL' || repo.category === catFilter;
+                const matchStatus = statusFilter === 'ALL' || repo.status === statusFilter;
+                return matchSearch && matchCat && matchStatus;
+            });
+
+            filtered.sort((a, b) => {
+                if (sortBy === 'rating-desc') return (parseFloat(b.rating) || 0) - (parseFloat(a.rating) || 0);
+                if (sortBy === 'stars-desc') return (b.stars || 0) - (a.stars || 0);
+                if (sortBy === 'name-asc') return a.name.localeCompare(b.name);
+                return b.createdAt - a.createdAt;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                grid.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+                return;
+            }
+
+            grid.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            emptyState.classList.remove('flex');
+
+            grid.innerHTML = filtered.map(repo => {
+                const safeName = escapeHTML(repo.name);
+                const safeNotes = repo.notes ? escapeHTML(repo.notes) : '<span class="italic text-slate-600">Tidak ada catatan tambahan.</span>';
+                const safeUrl = escapeHTML(repo.url);
+                const formattedRating = (parseFloat(repo.rating) || 0).toFixed(1);
+                
+                const parts = safeName.split('/');
+                const displayTitle = parts.length === 2 
+                    ? `<span class="text-slate-400 font-normal">${parts[0]}/</span><span class="text-white font-bold">${parts[1]}</span>`
+                    : `<span class="text-white font-bold">${safeName}</span>`;
+
+                const hasStars = repo.stars && repo.stars > 0;
+                const hasLang = repo.language && repo.language !== 'Unknown';
+                const isStarredByMe = starredSet.has(repo.name.toLowerCase());
+
+                return `
+                <article class="group bg-slate-900/80 hover:bg-slate-900 border border-slate-800/90 hover:border-cyan-500/40 rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 animate-fade-in">
+                    <div>
+                        <!-- Top Row: Kategori & Tombol Quick Rating -->
+                        <div class="flex items-center justify-between gap-2 mb-3">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800/90 text-slate-300 border border-slate-700/70">
+                                ${escapeHTML(repo.category)}
+                            </span>
+                            <button onclick="openQuickRating('${repo.id}')" title="Klik untuk ubah rating pribadi"
+                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition cursor-pointer ${getRatingColor(repo.rating)}">
+                                <span class="hidden sm:inline-flex items-center gap-0.5">${renderMiniStars(repo.rating)}</span>
+                                <span>${formattedRating}/10</span>
+                            </button>
+                        </div>
+
+                        <!-- Judul Repo -->
+                        <h2 class="text-base sm:text-lg font-mono tracking-tight break-words leading-snug mb-2.5 group-hover:text-cyan-300 transition">
+                            <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="hover:underline">
+                                ${displayTitle}
+                            </a>
+                        </h2>
+
+                        <!-- Baris Status + Metadata GitHub (Stars & Bahasa) -->
+                        <div class="flex flex-wrap items-center gap-2 mb-3">
+                            <button onclick="cycleStatus('${repo.id}')" title="Klik untuk ubah status cepat"
+                                class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border transition hover:brightness-110 ${getStatusBadge(repo.status)}">
+                                ${escapeHTML(repo.status)}
+                            </button>
+
+                            ${hasStars ? `
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-950 border border-slate-800 text-[11px] font-mono text-amber-300/90" title="Total GitHub Stars">
+                                <i class="fa-solid fa-star text-[9px] text-amber-400"></i> ${formatNumber(repo.stars)}
+                            </span>` : ''}
+
+                            ${hasLang ? `
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-950 border border-slate-800 text-[11px] font-mono text-slate-300" title="Bahasa Utama">
+                                <span class="w-2 h-2 rounded-full ${getLangDotColor(repo.language)}"></span>
+                                ${escapeHTML(repo.language)}
+                            </span>` : ''}
+                        </div>
+
+                        <!-- Catatan / Deskripsi -->
+                        <p class="text-xs sm:text-sm text-slate-400 leading-relaxed line-clamp-4 mb-4 whitespace-pre-line">
+                            ${safeNotes}
+                        </p>
+                    </div>
+
+                    <!-- Footer Kartu: Action Buttons -->
+                    <div class="pt-3.5 border-t border-slate-800/80 flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-1.5">
+                            <!-- Tombol Interaktif GitHub Star -->
+                            <button onclick="toggleGitHubStar('${repo.id}')" 
+                                title="${isStarredByMe ? 'Sudah di-Star di akun GitHub-mu (Klik untuk Unstar)' : 'Beri Star langsung di GitHub'}"
+                                class="px-2.5 py-1.5 rounded-lg border text-xs font-medium transition flex items-center gap-1.5 ${
+                                    isStarredByMe 
+                                    ? 'bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border-amber-500/40' 
+                                    : 'bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-amber-300 border-slate-700/60'
+                                }">
+                                <i class="${isStarredByMe ? 'fa-solid text-amber-400' : 'fa-regular'} fa-star text-[11px]"></i>
+                                <span>${isStarredByMe ? 'Starred' : 'Star'}</span>
+                            </button>
+
+                            <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" 
+                                class="px-2.5 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/20 text-xs font-medium transition flex items-center gap-1" title="Buka di GitHub">
+                                <span>Buka</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                            </a>
+
+                            <button onclick="copyRepoUrl('${safeUrl}')" aria-label="Salin URL GitHub"
+                                class="p-1.5 w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/60 transition flex items-center justify-center" title="Salin URL GitHub">
+                                <i class="fa-regular fa-copy text-xs"></i>
+                            </button>
+                        </div>
+
+                        <div class="flex items-center gap-1">
+                            <button onclick="openModal('${repo.id}')" aria-label="Edit Repo"
+                                class="p-1.5 w-8 h-8 rounded-lg text-slate-400 hover:text-cyan-400 hover:bg-slate-800 transition flex items-center justify-center" title="Edit Repo">
+                                <i class="fa-solid fa-pen-to-square text-xs"></i>
+                            </button>
+                            <button onclick="promptDelete('${repo.id}')" aria-label="Hapus Repo"
+                                class="p-1.5 w-8 h-8 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition flex items-center justify-center" title="Hapus Repo">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                </article>
+                `;
+            }).join('');
+        }
+
+        // Ganti status cepat langsung dari kartu
+        function cycleStatus(id) {
+            const statuses = ['Belum Dicoba', 'Sedang Dipelajari', 'Wajib Pakai', 'Arsip'];
+            const index = repos.findIndex(r => r.id === id);
+            if (index !== -1) {
+                const currentIdx = statuses.indexOf(repos[index].status);
+                const nextStatus = statuses[(currentIdx + 1) % statuses.length];
+                repos[index].status = nextStatus;
+                saveData();
+                renderAll();
+                showToast(`Status diubah ke "${nextStatus}"`, 'info');
+            }
+        }
+
+        // =========================================================================
+        // MODAL TAMBAH & EDIT
+        // =========================================================================
+
+        function openModal(editId = null) {
+            const modal = document.getElementById('repo-modal');
+            const title = document.getElementById('modal-title');
+            const form = document.getElementById('repo-form');
+            const nameInput = document.getElementById('repo-name');
+            const notesInput = document.getElementById('repo-notes');
+            const previewBox = document.getElementById('api-meta-preview');
+            
+            form.reset();
+            nameInput.dataset.manualEdit = '';
+            notesInput.dataset.manualEdit = '';
+            lastFetchedRepoKey = '';
+            previewBox.classList.add('hidden');
+            document.getElementById('refetch-btn').classList.add('hidden');
+            document.getElementById('url-extract-hint').innerHTML = `<i class="fa-solid fa-circle-info text-slate-600"></i> <span>Tempel link GitHub untuk deteksi otomatis nama, deskripsi, stars & kategori.</span>`;
+
+            // Atur status default toggle Otomatis Star di GitHub
+            const autoStarCheckbox = document.getElementById('repo-auto-star');
+            const autoStarSubtext = document.getElementById('auto-star-subtext');
+            if (ghConfig.token) {
+                autoStarCheckbox.disabled = false;
+                autoStarCheckbox.checked = !editId; // Otomatis aktif saat tambah repo baru
+                autoStarSubtext.textContent = `Akan langsung memberi Star sebagai @${ghConfig.user?.login || 'GitHub User'}`;
+            } else {
+                autoStarCheckbox.checked = false;
+                autoStarCheckbox.disabled = true;
+                autoStarSubtext.textContent = 'Hubungkan token GitHub di menu atas untuk mengaktifkan fitur ini';
+            }
+
+            if (editId) {
+                const repo = repos.find(r => r.id === editId);
+                if (!repo) return;
+                title.textContent = 'Edit Repositori';
+                document.getElementById('repo-id').value = repo.id;
+                document.getElementById('repo-url').value = repo.url;
+                nameInput.value = repo.name;
+                nameInput.dataset.manualEdit = 'true';
+                document.getElementById('repo-category').value = repo.category;
+                document.getElementById('repo-status').value = repo.status;
+                syncModalRating(repo.rating);
+                notesInput.value = repo.notes || '';
+                notesInput.dataset.manualEdit = repo.notes ? 'true' : '';
+                
+                document.getElementById('repo-stars').value = repo.stars || 0;
+                document.getElementById('repo-language').value = repo.language || '';
+                document.getElementById('repo-topics').value = JSON.stringify(repo.topics || []);
+                document.getElementById('refetch-btn').classList.remove('hidden');
+            } else {
+                title.textContent = 'Simpan Repositori Baru';
+                document.getElementById('repo-id').value = '';
+                document.getElementById('repo-stars').value = 0;
+                document.getElementById('repo-language').value = '';
+                document.getElementById('repo-topics').value = '[]';
+                syncModalRating(8);
+            }
+
+            modal.classList.remove('hidden');
+            setTimeout(() => document.getElementById('repo-url').focus(), 50);
+        }
+
+        function closeModal() {
+            document.getElementById('repo-modal').classList.add('hidden');
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('repo-id').value;
+            const url = document.getElementById('repo-url').value.trim();
+            const name = document.getElementById('repo-name').value.trim();
+            const category = document.getElementById('repo-category').value;
+            const status = document.getElementById('repo-status').value;
+            const rating = parseFloat(document.getElementById('repo-rating').value);
+            const notes = document.getElementById('repo-notes').value.trim();
+            const stars = parseInt(document.getElementById('repo-stars').value || '0', 10);
+            const language = document.getElementById('repo-language').value || '';
+            const shouldAutoStar = document.getElementById('repo-auto-star').checked;
+            let topics = [];
+            try { topics = JSON.parse(document.getElementById('repo-topics').value || '[]'); } catch(err) {}
+
+            if (id) {
+                const idx = repos.findIndex(r => r.id === id);
+                if (idx !== -1) {
+                    repos[idx] = { ...repos[idx], url, name, category, status, rating, notes, stars, language, topics };
+                    showToast('Perubahan repositori berhasil disimpan!', 'success');
+                }
+            } else {
+                const newRepo = {
+                    id: 'repo-' + Date.now(),
+                    url,
+                    name,
+                    category,
+                    status,
+                    rating,
+                    stars,
+                    language,
+                    topics,
+                    notes,
+                    createdAt: Date.now()
+                };
+                repos.unshift(newRepo);
+                showToast('Repositori berhasil ditambahkan ke Vault!', 'success');
+            }
+
+            if (shouldAutoStar && ghConfig.token) {
+                starRepoOnGitHubSilently(url);
+            }
+
+            saveData();
+            renderAll();
+            closeModal();
+        }
+
+        // =========================================================================
+        // HAPUS, CLIPBOARD, FILTER, & EKSPOR/IMPOR
+        // =========================================================================
+
+        function promptDelete(id) {
+            const repo = repos.find(r => r.id === id);
+            if (!repo) return;
+            deleteTargetId = id;
+            document.getElementById('delete-repo-name').textContent = repo.name;
+            document.getElementById('delete-modal').classList.remove('hidden');
+            
+            document.getElementById('confirm-delete-btn').onclick = () => {
+                repos = repos.filter(r => r.id !== deleteTargetId);
+                saveData();
+                renderAll();
+                closeDeleteModal();
+                showToast('Repositori telah dihapus.', 'info');
+            };
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('delete-modal').classList.add('hidden');
+            deleteTargetId = null;
+        }
+
+        function copyRepoUrl(url) {
+            const tempInput = document.createElement('input');
+            tempInput.value = url;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            try {
+                document.execCommand('copy');
+                showToast('URL GitHub disalin ke clipboard!', 'success');
+            } catch (err) {
+                showToast('Gagal menyalin URL.', 'error');
+            }
+            document.body.removeChild(tempInput);
+        }
+
+        function clearSearch() {
+            const searchInput = document.getElementById('search-input');
+            searchInput.value = '';
+            document.getElementById('clear-search-btn').classList.add('hidden');
+            renderGrid();
+        }
+
+        function resetFilters() {
+            clearSearch();
+            document.getElementById('filter-category').value = 'ALL';
+            document.getElementById('filter-status').value = 'ALL';
+            document.getElementById('sort-by').value = 'newest';
+            renderGrid();
+        }
+
+        function toggleBackupMenu() {
+            document.getElementById('backup-menu').classList.toggle('hidden');
+        }
+
+        function exportJSON() {
+            document.getElementById('backup-menu').classList.add('hidden');
+            const dataStr = JSON.stringify(repos, null, 2);
+            downloadFile(dataStr, `repovault-backup-${getDateStamp()}.json`, 'application/json');
+            showToast('Backup JSON berhasil diunduh!', 'success');
+        }
+
+        function exportMarkdown() {
+            document.getElementById('backup-menu').classList.add('hidden');
+            let md = `# Daftar Repositori GitHub (RepoVault)\n`;
+            md += `Diekspor pada: ${new Date().toLocaleDateString('id-ID', { dateStyle: 'full' })}\n\n`;
+            
+            repos.forEach((r, idx) => {
+                const starInfo = r.stars ? ` | ${formatNumber(r.stars)} GitHub Stars` : '';
+                const langInfo = r.language ? ` | ${r.language}` : '';
+                md += `### ${idx + 1}. [${r.name}](${r.url})\n`;
+                md += `- **Kategori:** ${r.category} | **Status:** ${r.status} | **Rating Pribadi:** ${(parseFloat(r.rating) || 0).toFixed(1)}/10${starInfo}${langInfo}\n`;
+                if (r.notes) {
+                    md += `- **Catatan:** ${r.notes.replace(/\n/g, ' ')}\n`;
+                }
+                md += `\n`;
+            });
+
+            downloadFile(md, `repovault-list-${getDateStamp()}.md`, 'text/markdown');
+            showToast('File Markdown (.md) berhasil diunduh!', 'success');
+        }
+
+        function importJSON(event) {
+            document.getElementById('backup-menu').classList.add('hidden');
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (!Array.isArray(imported)) throw new Error('Format tidak valid');
+                    
+                    const existingIds = new Set(repos.map(r => r.id));
+                    let addedCount = 0;
+                    
+                    imported.forEach(item => {
+                        if (item.url && item.name) {
+                            let newId = item.id || 'repo-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+                            if (existingIds.has(newId)) {
+                                // ID bentrok: buat ID baru agar dua repo tidak saling menimpa
+                                newId = 'repo-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+                            }
+                            existingIds.add(newId);
+                            const newItem = {
+                                id: newId,
+                                url: item.url,
+                                name: item.name,
+                                category: item.category || 'Lainnya',
+                                status: item.status || 'Belum Dicoba',
+                                rating: parseFloat(item.rating) || 7.5,
+                                stars: parseInt(item.stars || 0, 10),
+                                language: item.language || '',
+                                topics: Array.isArray(item.topics) ? item.topics : [],
+                                notes: item.notes || '',
+                                createdAt: item.createdAt || Date.now()
+                            };
+                            repos.unshift(newItem);
+                            addedCount++;
+                        }
+                    });
+
+                    saveData();
+                    renderAll();
+                    showToast(`Berhasil mengimpor ${addedCount} repositori!`, 'success');
+                } catch (err) {
+                    showToast('File JSON tidak valid atau rusak.', 'error');
+                }
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        function downloadFile(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function getDateStamp() {
+            return new Date().toISOString().slice(0, 10);
+        }
+
+        function escapeHTML(str) {
+            if (!str) return '';
+            return str.replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            }[tag]));
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let colors = 'bg-slate-800 border-slate-700 text-white';
+            let icon = '<i class="fa-solid fa-circle-info text-cyan-400"></i>';
+            
+            if (type === 'success') {
+                colors = 'bg-slate-900 border-emerald-500/40 text-emerald-200';
+                icon = '<i class="fa-solid fa-circle-check text-emerald-400"></i>';
+            } else if (type === 'error') {
+                colors = 'bg-slate-900 border-rose-500/40 text-rose-200';
+                icon = '<i class="fa-solid fa-circle-exclamation text-rose-400"></i>';
+            }
+
+            toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl border shadow-2xl text-xs sm:text-sm font-medium animate-fade-in ${colors}`;
+            toast.innerHTML = `${icon}<span>${escapeHTML(message)}</span>`;
+            
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(8px)';
+                toast.style.transition = 'all 0.2s ease';
+                setTimeout(() => toast.remove(), 200);
+            }, 2800);
+        }
+    </script>
+</body>
+</html>
