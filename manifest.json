@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "Threads GitHub Repo Extractor (RepoVault Companion)",
+  "version": "1.0.0",
+  "description": "Ekstrak otomatis semua link repositori GitHub dari halaman Saved Posts Threads untuk diimpor ke RepoVault.",
+  "permissions": ["activeTab", "scripting", "clipboardWrite"],
+  "host_permissions": ["https://www.threads.net/*", "https://www.threads.com/*"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Ekstrak Link GitHub dari Threads"
+  }
+}
