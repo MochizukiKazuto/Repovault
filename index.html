@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RepoVault: Brankas Repositori GitHub Cerdas</title>
+    <title>RepoVault: Brankas Repositori GitHub Cerdas + Threads Importer</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Inter & JetBrains Mono -->
@@ -91,16 +91,22 @@
                     <h1 class="text-lg sm:text-xl font-bold tracking-tight text-white">
                         RepoVault
                     </h1>
-                    <p class="text-xs text-slate-400 hidden sm:block">Tempel URL GitHub, sistem otomatis mengisi & mengategorikan</p>
+                    <p class="text-xs text-slate-400 hidden sm:block">Tempel URL GitHub atau Impor Massal dari Threads Saved Posts</p>
                 </div>
             </div>
 
             <!-- Action Buttons -->
-            <div class="flex items-center gap-2 sm:gap-3">
+            <div class="flex items-center gap-2 sm:gap-2.5">
+                <!-- Tombol Impor Massal dari Threads -->
+                <button onclick="openThreadsModal()" class="px-3 py-2 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/35 text-xs sm:text-sm font-semibold transition flex items-center gap-2" title="Ekstrak & Impor Banyak Link GitHub dari Threads Saved Posts">
+                    <i class="fa-solid fa-at text-sm text-indigo-400"></i>
+                    <span class="hidden sm:inline">Threads Import</span>
+                </button>
+
                 <!-- Tombol GitHub Sync & Integration -->
                 <button onclick="openGitHubModal()" id="gh-connect-btn" class="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700/80 text-xs sm:text-sm font-medium transition flex items-center gap-2" title="Pengaturan GitHub Cloud Sync & Auto-Star">
                     <i class="fa-brands fa-github text-base text-white"></i>
-                    <span id="gh-btn-label" class="hidden sm:inline">GitHub Sync</span>
+                    <span id="gh-btn-label" class="hidden md:inline">GitHub Sync</span>
                     <span id="gh-status-dot" class="w-2 h-2 rounded-full bg-slate-500" aria-hidden="true"></span>
                 </button>
 
@@ -108,12 +114,15 @@
                 <div class="relative" id="backup-dropdown-wrapper">
                     <button onclick="toggleBackupMenu()" class="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-xs sm:text-sm font-medium transition flex items-center gap-2" title="Ekspor atau Impor Data">
                         <i class="fa-solid fa-database text-cyan-400"></i>
-                        <span class="hidden md:inline">Backup / Data</span>
+                        <span class="hidden lg:inline">Backup / Data</span>
                         <i class="fa-solid fa-chevron-down text-[10px] text-slate-500"></i>
                     </button>
                     
-                    <div id="backup-menu" class="hidden absolute right-0 mt-2 w-60 rounded-xl bg-slate-900 border border-slate-800 shadow-2xl py-1.5 z-40 animate-fade-in">
-                        <div class="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">GitHub Cloud</div>
+                    <div id="backup-menu" class="hidden absolute right-0 mt-2 w-64 rounded-xl bg-slate-900 border border-slate-800 shadow-2xl py-1.5 z-40 animate-fade-in">
+                        <div class="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Otomatisasi & Cloud</div>
+                        <button onclick="openThreadsModal()" class="w-full text-left px-4 py-2 text-sm text-indigo-300 hover:bg-slate-800 flex items-center gap-2.5 transition">
+                            <i class="fa-solid fa-at w-4 text-center text-indigo-400"></i> Ekstrak Link Threads (Massal)
+                        </button>
                         <button onclick="importFromGitHubStars()" class="w-full text-left px-4 py-2 text-sm text-amber-300 hover:bg-slate-800 flex items-center gap-2.5 transition">
                             <i class="fa-solid fa-star w-4 text-center text-amber-400"></i> Import dari GitHub Stars
                         </button>
@@ -146,7 +155,7 @@
     <!-- Main Content -->
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
 
-        <!-- Statistik Ringkas (dihitung dari data tersimpan, bukan angka hiasan) -->
+        <!-- Statistik Ringkas -->
         <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <!-- Total Repo -->
             <div class="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-4 sm:p-5 flex items-center justify-between">
@@ -258,7 +267,7 @@
                 <i class="fa-solid fa-folder-open text-2xl"></i>
             </div>
             <h3 class="text-lg font-semibold text-white">Tidak ada repositori ditemukan</h3>
-            <p class="text-sm text-slate-400 max-w-md mt-1 mb-5">Coba ubah kata kunci pencarian, reset filter, atau klik tombol "Simpan Repo" untuk menempelkan link GitHub.</p>
+            <p class="text-sm text-slate-400 max-w-md mt-1 mb-5">Coba ubah kata kunci pencarian, reset filter, atau klik tombol "Simpan Repo" / "Threads Import".</p>
             <button onclick="resetFilters()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-sm font-medium text-cyan-400 transition">
                 Reset Semua Filter
             </button>
@@ -269,10 +278,148 @@
     <!-- Footer -->
     <footer class="border-t border-slate-900 py-5 mt-12">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
-            <p>RepoVault &bull; Auto-Fetch Metadata via GitHub REST API &bull; Tersimpan di <code class="text-slate-400">localStorage</code>.</p>
-            <p>Gunakan <span class="text-cyan-400 font-medium">Backup JSON</span> untuk mencadangkan datamu lintas perangkat.</p>
+            <p>RepoVault &bull; Auto-Fetch Metadata via GitHub REST API &bull; Threads Bulk Importer.</p>
+            <p>Gunakan <span class="text-cyan-400 font-medium">GitHub Sync (Gist)</span> atau <span class="text-cyan-400 font-medium">Backup JSON</span> untuk mencadangkan datamu.</p>
         </div>
     </footer>
+
+    <!-- ========================================================================= -->
+    <!-- MODAL BARU: THREADS SAVED POSTS BULK EXTRACTOR & IMPORTER                 -->
+    <!-- ========================================================================= -->
+    <div id="threads-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm" onclick="closeThreadsModal()"></div>
+        <div class="flex min-h-full items-center justify-center p-4">
+            <div class="relative w-full max-w-3xl rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-6 animate-fade-in">
+                <!-- Header -->
+                <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+                            <i class="fa-solid fa-at text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">Threads Saved Posts &rarr; Bulk Repo Importer</h3>
+                            <p class="text-xs text-slate-400">Ekstrak puluhan link GitHub sekaligus dari halaman Saved Threads atau hasil ekstensi</p>
+                        </div>
+                    </div>
+                    <button onclick="closeThreadsModal()" aria-label="Tutup" class="w-8 h-8 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 flex items-center justify-center transition">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Tabs Navigasi Metode -->
+                <div class="flex gap-2 mt-4 border-b border-slate-800 pb-3">
+                    <button type="button" id="tab-btn-paste" onclick="switchThreadsTab('paste')" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 text-white transition flex items-center gap-2">
+                        <i class="fa-solid fa-paste"></i>
+                        <span>1. Tempel Teks / JSON Ekstensi</span>
+                    </button>
+                    <button type="button" id="tab-btn-script" onclick="switchThreadsTab('script')" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white transition flex items-center gap-2">
+                        <i class="fa-solid fa-terminal"></i>
+                        <span>2. Cara Ekstrak Otomatis dari Threads</span>
+                    </button>
+                </div>
+
+                <!-- Tab 1: Paste & Auto-Extract -->
+                <div id="threads-tab-paste" class="mt-4 space-y-4">
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label for="threads-raw-input" class="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                                Tempel Teks Halaman Saved Threads / JSON dari Ekstensi Chrome
+                            </label>
+                            <button type="button" onclick="clearThreadsInput()" class="text-[11px] text-slate-400 hover:text-rose-400">
+                                Bersihkan
+                            </button>
+                        </div>
+                        <textarea id="threads-raw-input" rows="5" oninput="scanThreadsInput()"
+                            placeholder="Cara cepat tanpa instal apa pun: Buka threads.net/saved -> tekan Ctrl+A lalu Ctrl+C -> tempel (Ctrl+V) di kotak ini! Atau tempel output JSON dari Chrome Extension..."
+                            class="w-full p-3.5 bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl text-xs font-mono text-slate-200 placeholder-slate-600 outline-none transition resize-none"></textarea>
+                    </div>
+
+                    <!-- Hasil Scan URL GitHub -->
+                    <div class="bg-slate-950/90 border border-slate-800 rounded-xl p-4">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold text-white">Repositori Terdeteksi:</span>
+                                <span id="threads-detected-count" class="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">0</span>
+                                <span id="threads-dup-count" class="hidden px-2 py-0.5 rounded-full text-[11px] font-mono bg-slate-800 text-slate-400">0 sudah ada</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="toggleAllThreadsSelection(true)" class="text-[11px] text-cyan-400 hover:underline">Pilih Semua Baru</button>
+                                <span class="text-slate-700">|</span>
+                                <button type="button" onclick="toggleAllThreadsSelection(false)" class="text-[11px] text-slate-400 hover:underline">Batal Pilih</button>
+                            </div>
+                        </div>
+
+                        <div id="threads-preview-list" class="max-h-52 overflow-y-auto space-y-1.5 pr-1">
+                            <p class="text-xs text-slate-500 italic py-6 text-center">Belum ada link GitHub yang terdeteksi. Tempel teks atau JSON di atas.</p>
+                        </div>
+                    </div>
+
+                    <!-- Opsi Tambahan Saat Import Massal -->
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+                        <div class="flex items-center gap-4">
+                            <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                                <input type="checkbox" id="threads-fetch-api-check" checked class="rounded bg-slate-800 border-slate-700 text-indigo-500 focus:ring-0">
+                                <span>Auto-Fetch Metadata & Kategori via GitHub API</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                                <input type="checkbox" id="threads-autostar-check" class="rounded bg-slate-800 border-slate-700 text-amber-500 focus:ring-0">
+                                <span>Auto-Star di GitHub</span>
+                            </label>
+                        </div>
+
+                        <button type="button" id="btn-bulk-import-threads" onclick="executeBulkThreadsImport()" disabled
+                            class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-2 shrink-0">
+                            <i class="fa-solid fa-cloud-arrow-down"></i>
+                            <span id="btn-bulk-import-label">Impor 0 Repo Terpilih</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Panduan Ekstraksi Otomatis (Bookmarklet & Chrome Extension) -->
+                <div id="threads-tab-script" class="hidden mt-4 space-y-4 text-xs text-slate-300">
+                    <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2.5">
+                        <h4 class="font-bold text-sm text-cyan-400 flex items-center gap-2">
+                            <i class="fa-solid fa-bolt"></i> Cara 1: Console Script Sekali Klik di Browser (Tanpa Instal Ekstensi)
+                        </h4>
+                        <ol class="list-decimal list-inside space-y-1 text-slate-400">
+                            <li>Buka <a href="https://www.threads.net/saved" target="_blank" class="text-cyan-400 underline">threads.net/saved</a> di browser desktop dan scroll ke bawah untuk memuat postingan simpananmu.</li>
+                            <li>Tekan <kbd class="px-1.5 py-0.5 bg-slate-800 rounded text-slate-200">F12</kbd> (atau klik kanan &rarr; Inspect), lalu buka tab <strong>Console</strong>.</li>
+                            <li>Salin script di bawah ini, tempel di Console, lalu tekan <strong>Enter</strong> (link otomatis tersalin ke clipboard!):</li>
+                        </ol>
+                        <div class="relative mt-2">
+                            <pre id="threads-console-snippet" class="p-3 rounded-lg bg-slate-900 border border-slate-800 font-mono text-[11px] text-emerald-300 overflow-x-auto select-all">(() => {
+  const urls = new Set();
+  document.querySelectorAll('a[href]').forEach(a => {
+    const href = decodeURIComponent(a.href || '');
+    const m = href.match(/https?:\/\/github\.com\/([a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+)/);
+    if (m) urls.add('https://github.com/' + m[1].replace(/\.git$/, ''));
+  });
+  const text = [...document.body.innerText.matchAll(/github\.com\/([a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+)/g)];
+  text.forEach(m => urls.add('https://github.com/' + m[1].replace(/\.git$/, '')));
+  const res = JSON.stringify([...urls], null, 2);
+  copy(res);
+  alert('Berhasil menyalin ' + urls.size + ' link GitHub ke clipboard! Sekarang tempel di RepoVault.');
+})();</pre>
+                            <button type="button" onclick="copyConsoleSnippet()" class="absolute top-2 right-2 px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-[11px] text-white border border-slate-700">
+                                <i class="fa-regular fa-copy mr-1"></i> Salin Script
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+                        <h4 class="font-bold text-sm text-indigo-400 flex items-center gap-2">
+                            <i class="fa-brands fa-chrome"></i> Cara 2: Chrome Extension Pendamping (Auto-Scroll & Export)
+                        </h4>
+                        <p class="text-slate-400 leading-relaxed">
+                            Jika kamu mengunduh paket ZIP RepoVault, di dalamnya sudah tersedia folder <code class="text-indigo-300 bg-slate-900 px-1.5 py-0.5 rounded">extension/</code> (Manifest V3). 
+                            Cukup buka <code class="text-slate-200">chrome://extensions</code> &rarr; aktifkan <strong>Developer Mode</strong> &rarr; klik <strong>Load unpacked</strong> &rarr; pilih folder <code class="text-indigo-300">extension/</code>. 
+                            Ekstensi tersebut dapat melakukan auto-scroll halaman Saved Threads dan mengekspor seluruh link GitHub ke format JSON untuk ditempel di Tab 1.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal Form Tambah / Edit Repo -->
     <div id="repo-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
@@ -670,6 +817,7 @@
         let deleteTargetId = null;
         let fetchDebounceTimer = null;
         let lastFetchedRepoKey = '';
+        let detectedThreadsRepos = []; // Menyimpan hasil scan modal Threads
         let ghConfig = {
             token: '',
             user: null,
@@ -677,7 +825,7 @@
             autoSync: true,
             lastSync: null
         };
-        let starredSet = new Set(); // Menyimpan "owner/repo" lowercase yang di-star oleh user
+        let starredSet = new Set();
 
         // Inisialisasi saat halaman dimuat
         document.addEventListener('DOMContentLoaded', async () => {
@@ -694,7 +842,6 @@
             }
         });
 
-        // Memuat konfigurasi GitHub dari localStorage
         function loadGhConfig() {
             try {
                 const raw = localStorage.getItem(GH_CONFIG_KEY);
@@ -714,7 +861,6 @@
             }
         }
 
-        // Memuat data dari localStorage
         function loadData() {
             try {
                 const raw = localStorage.getItem(STORAGE_KEY);
@@ -730,7 +876,6 @@
             }
         }
 
-        // Menyiapkan semua event listener untuk pencarian, filter, dan modal
         function setupEventListeners() {
             const searchInput = document.getElementById('search-input');
             const clearBtn = document.getElementById('clear-search-btn');
@@ -748,7 +893,6 @@
             document.getElementById('filter-status').addEventListener('change', renderGrid);
             document.getElementById('sort-by').addEventListener('change', renderGrid);
 
-            // Tutup dropdown backup jika klik di luar area
             document.addEventListener('click', (e) => {
                 const wrapper = document.getElementById('backup-dropdown-wrapper');
                 const menu = document.getElementById('backup-menu');
@@ -757,18 +901,17 @@
                 }
             });
 
-            // Tutup modal dengan tombol Escape
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
                     closeModal();
                     closeDeleteModal();
                     closeQuickRatingModal();
                     closeGitHubModal();
+                    closeThreadsModal();
                 }
             });
         }
 
-        // Menyimpan data ke localStorage (+ Auto-Sync ke Gist jika aktif)
         function saveData(skipAutoSync = false) {
             try {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(repos));
@@ -778,6 +921,268 @@
             } catch (e) {
                 showToast('Gagal menyimpan ke penyimpanan lokal browser.', 'error');
             }
+        }
+
+        // =========================================================================
+        // THREADS BULK EXTRACTOR & IMPORTER
+        // =========================================================================
+
+        function openThreadsModal() {
+            document.getElementById('backup-menu').classList.add('hidden');
+            const autoStarChk = document.getElementById('threads-autostar-check');
+            if (ghConfig.token) {
+                autoStarChk.disabled = false;
+            } else {
+                autoStarChk.checked = false;
+                autoStarChk.disabled = true;
+            }
+            document.getElementById('threads-modal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('threads-raw-input').focus(), 50);
+        }
+
+        function closeThreadsModal() {
+            document.getElementById('threads-modal').classList.add('hidden');
+        }
+
+        function switchThreadsTab(tab) {
+            const tabPaste = document.getElementById('threads-tab-paste');
+            const tabScript = document.getElementById('threads-tab-script');
+            const btnPaste = document.getElementById('tab-btn-paste');
+            const btnScript = document.getElementById('tab-btn-script');
+
+            if (tab === 'paste') {
+                tabPaste.classList.remove('hidden');
+                tabScript.classList.add('hidden');
+                btnPaste.className = 'px-3.5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 text-white transition flex items-center gap-2';
+                btnScript.className = 'px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white transition flex items-center gap-2';
+            } else {
+                tabPaste.classList.add('hidden');
+                tabScript.classList.remove('hidden');
+                btnScript.className = 'px-3.5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 text-white transition flex items-center gap-2';
+                btnPaste.className = 'px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white transition flex items-center gap-2';
+            }
+        }
+
+        function clearThreadsInput() {
+            document.getElementById('threads-raw-input').value = '';
+            scanThreadsInput();
+        }
+
+        function copyConsoleSnippet() {
+            const code = document.getElementById('threads-console-snippet').textContent;
+            navigator.clipboard?.writeText(code).then(() => {
+                showToast('Console script berhasil disalin!', 'success');
+            }).catch(() => {
+                showToast('Silakan blok dan salin manual script tersebut.', 'info');
+            });
+        }
+
+        function extractAllGitHubReposFromText(rawText) {
+            if (!rawText || !rawText.trim()) return [];
+            const foundMap = new Map();
+            const existingNames = new Set(repos.map(r => r.name.toLowerCase()));
+
+            // 1. Coba parse jika berupa JSON array/object dari ekstensi atau script
+            try {
+                const parsedJson = JSON.parse(rawText);
+                const list = Array.isArray(parsedJson) ? parsedJson : (parsedJson.repos || parsedJson.urls || []);
+                if (Array.isArray(list)) {
+                    list.forEach(entry => {
+                        const urlCandidate = typeof entry === 'string' ? entry : (entry.url || entry.repoUrl || '');
+                        const captionCandidate = typeof entry === 'object' ? (entry.caption || entry.notes || '') : '';
+                        const info = parseGitHubUrl(urlCandidate);
+                        if (info) {
+                            const key = info.fullName.toLowerCase();
+                            if (!foundMap.has(key)) {
+                                foundMap.set(key, {
+                                    ...info,
+                                    url: `https://github.com/${info.fullName}`,
+                                    caption: captionCandidate,
+                                    isDuplicate: existingNames.has(key),
+                                    selected: !existingNames.has(key)
+                                });
+                            }
+                        }
+                    });
+                }
+            } catch (e) {
+                // Bukan JSON murni, lanjutkan dengan Regex scanning
+            }
+
+            // 2. Regex global untuk menangkap github.com/owner/repo dari teks bebas / copy-paste halaman Threads
+            const decodedText = rawText.replace(/%2F/gi, '/').replace(/%3A/gi, ':');
+            const regex = /(?:https?:\/\/)?(?:www\.)?github\.com\/([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+)/gi;
+            let match;
+            while ((match = regex.exec(decodedText)) !== null) {
+                const owner = match[1];
+                const repo = match[2].replace(/\.git$/i, '');
+                const info = parseGitHubUrl(`https://github.com/${owner}/${repo}`);
+                if (info) {
+                    const key = info.fullName.toLowerCase();
+                    if (!foundMap.has(key)) {
+                        foundMap.set(key, {
+                            ...info,
+                            url: `https://github.com/${info.fullName}`,
+                            caption: '',
+                            isDuplicate: existingNames.has(key),
+                            selected: !existingNames.has(key)
+                        });
+                    }
+                }
+            }
+
+            return Array.from(foundMap.values());
+        }
+
+        function scanThreadsInput() {
+            const raw = document.getElementById('threads-raw-input').value;
+            detectedThreadsRepos = extractAllGitHubReposFromText(raw);
+            renderThreadsPreviewList();
+        }
+
+        function renderThreadsPreviewList() {
+            const listEl = document.getElementById('threads-preview-list');
+            const countEl = document.getElementById('threads-detected-count');
+            const dupEl = document.getElementById('threads-dup-count');
+
+            const total = detectedThreadsRepos.length;
+            const dupCount = detectedThreadsRepos.filter(r => r.isDuplicate).length;
+
+            countEl.textContent = total;
+            if (dupCount > 0) {
+                dupEl.textContent = `${dupCount} sudah ada di Vault`;
+                dupEl.classList.remove('hidden');
+            } else {
+                dupEl.classList.add('hidden');
+            }
+
+            if (total === 0) {
+                listEl.innerHTML = `<p class="text-xs text-slate-500 italic py-6 text-center">Belum ada link GitHub yang terdeteksi. Tempel teks atau JSON di atas.</p>`;
+                updateBulkImportButton();
+                return;
+            }
+
+            listEl.innerHTML = detectedThreadsRepos.map((item, idx) => {
+                const quickCat = detectCategoryFromSignals({ name: item.fullName, description: item.caption || '', language: '', topics: [] });
+                return `
+                <label class="flex items-center justify-between gap-3 p-2.5 rounded-lg border transition cursor-pointer ${
+                    item.isDuplicate 
+                    ? 'bg-slate-900/40 border-slate-800/60 opacity-60' 
+                    : (item.selected ? 'bg-indigo-500/10 border-indigo-500/35' : 'bg-slate-900 border-slate-800')
+                }">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <input type="checkbox" ${item.selected ? 'checked' : ''} onchange="toggleSingleThreadsItem(${idx}, this.checked)"
+                            class="rounded bg-slate-800 border-slate-700 text-indigo-500 focus:ring-0">
+                        <div class="truncate">
+                            <p class="text-xs font-mono font-semibold text-white truncate">${escapeHTML(item.fullName)}</p>
+                            ${item.caption ? `<p class="text-[11px] text-slate-400 truncate">${escapeHTML(item.caption)}</p>` : ''}
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <span class="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300 border border-slate-700">${escapeHTML(quickCat)}</span>
+                        ${item.isDuplicate ? `<span class="px-2 py-0.5 rounded text-[10px] bg-amber-500/15 text-amber-300 border border-amber-500/30">Sudah Ada</span>` : ''}
+                    </div>
+                </label>
+                `;
+            }).join('');
+
+            updateBulkImportButton();
+        }
+
+        function toggleSingleThreadsItem(index, checked) {
+            if (detectedThreadsRepos[index]) {
+                detectedThreadsRepos[index].selected = checked;
+                renderThreadsPreviewList();
+            }
+        }
+
+        function toggleAllThreadsSelection(selectNewOnly) {
+            detectedThreadsRepos.forEach(item => {
+                item.selected = selectNewOnly ? !item.isDuplicate : false;
+            });
+            renderThreadsPreviewList();
+        }
+
+        function updateBulkImportButton() {
+            const btn = document.getElementById('btn-bulk-import-threads');
+            const label = document.getElementById('btn-bulk-import-label');
+            const selectedCount = detectedThreadsRepos.filter(r => r.selected).length;
+            btn.disabled = selectedCount === 0;
+            label.textContent = `Impor ${selectedCount} Repo Terpilih`;
+        }
+
+        async function executeBulkThreadsImport() {
+            const toImport = detectedThreadsRepos.filter(r => r.selected);
+            if (toImport.length === 0) return;
+
+            const shouldFetchApi = document.getElementById('threads-fetch-api-check').checked;
+            const shouldAutoStar = document.getElementById('threads-autostar-check').checked && !!ghConfig.token;
+            const btn = document.getElementById('btn-bulk-import-threads');
+            const label = document.getElementById('btn-bulk-import-label');
+
+            btn.disabled = true;
+            let imported = 0;
+
+            for (let i = 0; i < toImport.length; i++) {
+                const item = toImport[i];
+                label.textContent = `Memproses ${i + 1}/${toImport.length}...`;
+
+                let stars = 0;
+                let language = '';
+                let topics = [];
+                let description = item.caption || '';
+                let finalName = item.fullName;
+
+                if (shouldFetchApi) {
+                    try {
+                        const headers = { 'Accept': 'application/vnd.github.v3+json' };
+                        if (ghConfig.token) headers['Authorization'] = `Bearer ${ghConfig.token}`;
+                        const res = await fetch(`https://api.github.com/repos/${encodeURIComponent(item.owner)}/${encodeURIComponent(item.repo)}`, { headers });
+                        if (res.ok) {
+                            const data = await res.json();
+                            finalName = data.full_name || finalName;
+                            stars = data.stargazers_count || 0;
+                            language = data.language || '';
+                            topics = Array.isArray(data.topics) ? data.topics : [];
+                            if (data.description) {
+                                description = item.caption ? `${data.description}\n\nCatatan Threads: ${item.caption}` : data.description;
+                            }
+                        }
+                    } catch (e) {
+                        // Lanjut dengan fallback lokal jika rate limit
+                    }
+                }
+
+                const category = detectCategoryFromSignals({ name: finalName, description, language, topics });
+                const topicStr = topics.length > 0 ? `\n\nTopik: ${topics.slice(0, 6).map(t => '#' + t).join(' ')}` : '';
+
+                repos.unshift({
+                    id: 'repo-' + Date.now() + '-' + i,
+                    url: `https://github.com/${finalName}`,
+                    name: finalName,
+                    category,
+                    status: 'Belum Dicoba',
+                    rating: 8.0,
+                    stars,
+                    language,
+                    topics,
+                    notes: description ? `${description}${topicStr}` : 'Diimpor dari Threads Saved Posts.',
+                    createdAt: Date.now() - i * 100
+                });
+
+                if (shouldAutoStar) {
+                    starRepoOnGitHubSilently(`https://github.com/${finalName}`);
+                }
+
+                imported++;
+            }
+
+            saveData();
+            renderAll();
+            closeThreadsModal();
+            document.getElementById('threads-raw-input').value = '';
+            detectedThreadsRepos = [];
+            showToast(`Berhasil mengimpor ${imported} repositori dari Threads ke RepoVault!`, 'success');
         }
 
         // =========================================================================
@@ -926,7 +1331,6 @@
             showToast('Koneksi akun GitHub diputuskan.', 'info');
         }
 
-        // Mencari Gist milik user yang memiliki file repovault-data.json
         async function findExistingRepoVaultGist() {
             if (ghConfig.gistId) {
                 const checkRes = await fetch(`https://api.github.com/gists/${ghConfig.gistId}`, { headers: getGitHubHeaders() });
@@ -945,7 +1349,6 @@
             return null;
         }
 
-        // Push data lokal ke Secret GitHub Gist
         async function pushToGist(silent = false) {
             if (!ghConfig.token) {
                 if (!silent) showToast('Hubungkan GitHub Token terlebih dahulu.', 'error');
@@ -1005,7 +1408,6 @@
             }
         }
 
-        // Pull data dari Secret GitHub Gist dan gabungkan dengan data lokal
         async function pullFromGist() {
             if (!ghConfig.token) {
                 showToast('Hubungkan GitHub Token terlebih dahulu.', 'error');
@@ -1035,7 +1437,6 @@
                 const parsed = JSON.parse(fileObj.content);
                 const cloudRepos = Array.isArray(parsed) ? parsed : (parsed.repos || []);
 
-                // Merge cerdas berdasarkan nama repositori (lowercase)
                 const localMap = new Map(repos.map(r => [r.name.toLowerCase(), r]));
                 let addedCount = 0;
                 let updatedCount = 0;
@@ -1047,7 +1448,6 @@
                         localMap.set(key, cRepo);
                         addedCount++;
                     } else {
-                        // Versi cloud menang untuk repo yang sama (cloud adalah hasil push terakhir)
                         localMap.set(key, { ...localMap.get(key), ...cRepo });
                         updatedCount++;
                     }
@@ -1056,7 +1456,7 @@
                 repos = Array.from(localMap.values()).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
                 ghConfig.lastSync = Date.now();
                 saveGhConfig();
-                saveData(true); // Simpan lokal tanpa memicu push ulang langsung
+                saveData(true);
                 updateGitHubUIState();
                 renderAll();
 
@@ -1069,7 +1469,6 @@
             }
         }
 
-        // Ambil daftar repositori yang sedang di-star oleh user (halaman pertama 100 repo)
         async function syncUserStarredStatus() {
             if (!ghConfig.token) return;
             try {
@@ -1083,7 +1482,6 @@
             }
         }
 
-        // Toggle Star / Unstar langsung ke API GitHub
         async function toggleGitHubStar(repoId) {
             if (!ghConfig.token) {
                 showToast('Hubungkan GitHub Token dulu untuk memberi Star langsung!', 'info');
@@ -1104,7 +1502,6 @@
             const isCurrentlyStarred = starredSet.has(key);
             const method = isCurrentlyStarred ? 'DELETE' : 'PUT';
 
-            // Optimistic UI update
             if (isCurrentlyStarred) {
                 starredSet.delete(key);
                 if (repo.stars > 0) repo.stars -= 1;
@@ -1135,7 +1532,6 @@
                     throw new Error(`HTTP ${res.status}: pastikan token memiliki izin 'public_repo'.`);
                 }
             } catch (err) {
-                // Rollback jika gagal
                 if (isCurrentlyStarred) {
                     starredSet.add(key);
                     repo.stars = (repo.stars || 0) + 1;
@@ -1148,7 +1544,6 @@
             }
         }
 
-        // Helper untuk memberi Star saat menyimpan repo baru
         async function starRepoOnGitHubSilently(url) {
             if (!ghConfig.token) return;
             const parsed = parseGitHubUrl(url);
@@ -1165,14 +1560,12 @@
                 if (res.status === 204) {
                     starredSet.add(parsed.fullName.toLowerCase());
                     renderGrid();
-                    showToast(`Otomatis di-Star di GitHub: ${parsed.fullName}`, 'success');
                 }
             } catch (e) {
                 console.warn('Auto-star gagal:', e);
             }
         }
 
-        // Impor daftar repositori yang sudah pernah di-star di akun GitHub pengguna
         async function importFromGitHubStars() {
             document.getElementById('backup-menu').classList.add('hidden');
             if (!ghConfig.token) {
@@ -1255,8 +1648,7 @@
             if (match && match[1] && match[2]) {
                 const owner = match[1];
                 const repo = match[2].replace(/\.git$/i, '');
-                // Abaikan path sistem GitHub seperti github.com/topics/ai atau github.com/orgs/...
-                const reserved = ['topics', 'orgs', 'settings', 'marketplace', 'explore', 'trending', 'collections', 'sponsors'];
+                const reserved = ['topics', 'orgs', 'settings', 'marketplace', 'explore', 'trending', 'collections', 'sponsors', 'features', 'pricing', 'about', 'login', 'join'];
                 if (reserved.includes(owner.toLowerCase())) return null;
                 return { owner, repo, fullName: `${owner}/${repo}` };
             }
@@ -1282,13 +1674,11 @@
                 return;
             }
 
-            // Isi nama repo secara instan
             if (!nameInput.dataset.manualEdit) {
                 nameInput.value = parsed.fullName;
             }
             refetchBtn.classList.remove('hidden');
 
-            // Jalankan klasifikasi cepat berbasis URL terlebih dahulu sambil menunggu API
             const quickCat = detectCategoryFromSignals({
                 name: parsed.fullName,
                 description: '',
@@ -1297,7 +1687,6 @@
             });
             document.getElementById('repo-category').value = quickCat;
 
-            // Debounce pemanggilan GitHub REST API agar tidak spam saat mengetik
             if (lastFetchedRepoKey !== parsed.fullName) {
                 hint.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-cyan-400"></i> <span class="text-cyan-400">Menghubungi GitHub API untuk <strong>${parsed.fullName}</strong>...</span>`;
                 fetchDebounceTimer = setTimeout(() => {
@@ -1342,7 +1731,6 @@
                 const data = await response.json();
                 lastFetchedRepoKey = data.full_name;
 
-                // Simpan metadata tersembunyi ke form
                 const stars = data.stargazers_count || 0;
                 const language = data.language || 'Unknown';
                 const topics = Array.isArray(data.topics) ? data.topics : [];
@@ -1352,12 +1740,10 @@
                 document.getElementById('repo-language').value = language;
                 document.getElementById('repo-topics').value = JSON.stringify(topics);
 
-                // Isi nama resmi dari API jika belum diedit manual
                 if (!nameInput.dataset.manualEdit) {
                     nameInput.value = data.full_name;
                 }
 
-                // Tentukan kategori cerdas berdasarkan topics, description, language, & name
                 const detectedCategory = detectCategoryFromSignals({
                     name: data.full_name,
                     description,
@@ -1366,13 +1752,11 @@
                 });
                 categorySelect.value = detectedCategory;
 
-                // Isi catatan/deskripsi otomatis jika masih kosong atau belum diedit manual
                 if (!notesInput.dataset.manualEdit && description) {
                     const topicStr = topics.length > 0 ? `\n\nTopik: ${topics.slice(0, 6).map(t => '#' + t).join(' ')}` : '';
                     notesInput.value = `${description}${topicStr}`;
                 }
 
-                // Tampilkan Preview Box
                 document.getElementById('preview-stars').innerHTML = `<i class="fa-solid fa-star"></i> ${formatNumber(stars)}`;
                 document.getElementById('preview-lang').innerHTML = `<span class="w-2 h-2 rounded-full ${getLangDotColor(language)}"></span> ${escapeHTML(language)}`;
                 document.getElementById('preview-auto-cat').textContent = `Kategori: ${detectedCategory}`;
@@ -1381,7 +1765,6 @@
                 hint.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> <span class="text-emerald-400">Metadata berhasil diambil & dikategorikan ke <strong>${detectedCategory}</strong>!</span>`;
 
             } catch (err) {
-                // Fallback cerdas menggunakan keyword URL jika offline / rate-limit
                 const fallbackCat = detectCategoryFromSignals({
                     name: `${owner}/${repo}`,
                     description: '',
@@ -1396,62 +1779,36 @@
             }
         }
 
-        // Algoritma Klasifikasi Kategori Cerdas
         function detectCategoryFromSignals({ name, description, language, topics }) {
             const lang = (language || '').toLowerCase();
             const corpus = `${name} ${description} ${(topics || []).join(' ')}`.toLowerCase();
 
-            // 1. AI & Agents
             const aiKeywords = ['ai', 'llm', 'agent', 'agents', 'gpt', 'claude', 'openai', 'langchain', 'rag', 'prompt', 'machine-learning', 'deep-learning', 'neural', 'transformer', 'diffusion', 'ollama', 'mcp', 'copilot'];
-            if (aiKeywords.some(kw => corpus.includes(kw))) {
-                return 'AI & Agents';
-            }
+            if (aiKeywords.some(kw => corpus.includes(kw))) return 'AI & Agents';
 
-            // 2. Security
             const secKeywords = ['security', 'pentest', 'vulnerability', 'exploit', 'ctf', 'malware', 'osint', 'cybersecurity', 'scanner', 'auth', 'oauth', 'firewall', 'encryption', 'audit'];
-            if (secKeywords.some(kw => corpus.includes(kw))) {
-                return 'Security';
-            }
+            if (secKeywords.some(kw => corpus.includes(kw))) return 'Security';
 
-            // 3. Mobile
             const mobileKeywords = ['android', 'ios', 'flutter', 'react-native', 'swiftui', 'kotlin-multiplatform', 'expo', 'mobile-app'];
-            if (['swift', 'dart', 'objective-c'].includes(lang) || mobileKeywords.some(kw => corpus.includes(kw))) {
-                return 'Mobile';
-            }
+            if (['swift', 'dart', 'objective-c'].includes(lang) || mobileKeywords.some(kw => corpus.includes(kw))) return 'Mobile';
 
-            // 4. Web & Frontend
             const webKeywords = ['react', 'vue', 'svelte', 'nextjs', 'nuxt', 'tailwind', 'css', 'ui', 'frontend', 'component', 'animation', 'threejs', 'webgl', 'astro', 'vite', 'shadcn', 'dashboard'];
-            if (['html', 'css', 'vue', 'svelte'].includes(lang) || webKeywords.some(kw => corpus.includes(kw))) {
-                return 'Web & Frontend';
-            }
+            if (['html', 'css', 'vue', 'svelte'].includes(lang) || webKeywords.some(kw => corpus.includes(kw))) return 'Web & Frontend';
 
-            // 5. Data & Science
             const dataKeywords = ['data-science', 'pandas', 'numpy', 'jupyter', 'visualization', 'analytics', 'dataset', 'bi', 'etl', 'spark', 'bioinformatics', 'gis', 'spatial'];
-            if (['jupyter notebook', 'r', 'julia', 'matlab'].includes(lang) || dataKeywords.some(kw => corpus.includes(kw))) {
-                return 'Data & Science';
-            }
+            if (['jupyter notebook', 'r', 'julia', 'matlab'].includes(lang) || dataKeywords.some(kw => corpus.includes(kw))) return 'Data & Science';
 
-            // 6. Python & Automation
             const pyAutoKeywords = ['scraper', 'scraping', 'crawler', 'automation', 'bot', 'selenium', 'playwright', 'puppeteer', 'workflow', 'n8n'];
-            if (lang === 'python' || pyAutoKeywords.some(kw => corpus.includes(kw))) {
-                return 'Python & Automation';
-            }
+            if (lang === 'python' || pyAutoKeywords.some(kw => corpus.includes(kw))) return 'Python & Automation';
 
-            // 7. Backend & DevOps
             const backendKeywords = ['docker', 'kubernetes', 'k8s', 'terraform', 'devops', 'backend', 'api', 'graphql', 'grpc', 'microservice', 'database', 'postgres', 'redis', 'linux', 'cli', 'server', 'nginx'];
-            if (['go', 'rust', 'java', 'c#', 'php', 'ruby', 'shell', 'dockerfile', 'c++', 'c'].includes(lang) || backendKeywords.some(kw => corpus.includes(kw))) {
-                return 'Backend & DevOps';
-            }
+            if (['go', 'rust', 'java', 'c#', 'php', 'ruby', 'shell', 'dockerfile', 'c++', 'c'].includes(lang) || backendKeywords.some(kw => corpus.includes(kw))) return 'Backend & DevOps';
 
-            // Fallback TS/JS ke Web & Frontend
-            if (['typescript', 'javascript'].includes(lang)) {
-                return 'Web & Frontend';
-            }
+            if (['typescript', 'javascript'].includes(lang)) return 'Web & Frontend';
 
             return 'Lainnya';
         }
 
-        // Tandai input manual agar tidak tertimpa saat re-fetch
         document.getElementById('repo-name').addEventListener('input', function() {
             this.dataset.manualEdit = this.value.trim().length > 0 ? 'true' : '';
         });
@@ -1491,7 +1848,6 @@
             renderModalStarButtons(num);
         }
 
-        // Quick Rating langsung dari kartu
         function openQuickRating(id) {
             const repo = repos.find(r => r.id === id);
             if (!repo) return;
@@ -1547,14 +1903,10 @@
 
         function getStatusBadge(status) {
             switch (status) {
-                case 'Wajib Pakai':
-                    return 'bg-purple-500/15 text-purple-300 border-purple-500/30';
-                case 'Sedang Dipelajari':
-                    return 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30';
-                case 'Arsip':
-                    return 'bg-slate-800 text-slate-400 border-slate-700';
-                default: // Belum Dicoba
-                    return 'bg-amber-500/15 text-amber-300 border-amber-500/30';
+                case 'Wajib Pakai': return 'bg-purple-500/15 text-purple-300 border-purple-500/30';
+                case 'Sedang Dipelajari': return 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30';
+                case 'Arsip': return 'bg-slate-800 text-slate-400 border-slate-700';
+                default: return 'bg-amber-500/15 text-amber-300 border-amber-500/30';
             }
         }
 
@@ -1583,7 +1935,6 @@
         }
 
         function renderMiniStars(rating) {
-            // Konversi skala 10 ke visual 5 bintang (setengah bintang didukung)
             const outOfFive = (parseFloat(rating) || 0) / 2;
             let starsHtml = '';
             for (let i = 1; i <= 5; i++) {
@@ -1658,7 +2009,6 @@
                 return `
                 <article class="group bg-slate-900/80 hover:bg-slate-900 border border-slate-800/90 hover:border-cyan-500/40 rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 animate-fade-in">
                     <div>
-                        <!-- Top Row: Kategori & Tombol Quick Rating -->
                         <div class="flex items-center justify-between gap-2 mb-3">
                             <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800/90 text-slate-300 border border-slate-700/70">
                                 ${escapeHTML(repo.category)}
@@ -1670,14 +2020,12 @@
                             </button>
                         </div>
 
-                        <!-- Judul Repo -->
                         <h2 class="text-base sm:text-lg font-mono tracking-tight break-words leading-snug mb-2.5 group-hover:text-cyan-300 transition">
                             <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="hover:underline">
                                 ${displayTitle}
                             </a>
                         </h2>
 
-                        <!-- Baris Status + Metadata GitHub (Stars & Bahasa) -->
                         <div class="flex flex-wrap items-center gap-2 mb-3">
                             <button onclick="cycleStatus('${repo.id}')" title="Klik untuk ubah status cepat"
                                 class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border transition hover:brightness-110 ${getStatusBadge(repo.status)}">
@@ -1696,16 +2044,13 @@
                             </span>` : ''}
                         </div>
 
-                        <!-- Catatan / Deskripsi -->
                         <p class="text-xs sm:text-sm text-slate-400 leading-relaxed line-clamp-4 mb-4 whitespace-pre-line">
                             ${safeNotes}
                         </p>
                     </div>
 
-                    <!-- Footer Kartu: Action Buttons -->
                     <div class="pt-3.5 border-t border-slate-800/80 flex items-center justify-between gap-2">
                         <div class="flex items-center gap-1.5">
-                            <!-- Tombol Interaktif GitHub Star -->
                             <button onclick="toggleGitHubStar('${repo.id}')" 
                                 title="${isStarredByMe ? 'Sudah di-Star di akun GitHub-mu (Klik untuk Unstar)' : 'Beri Star langsung di GitHub'}"
                                 class="px-2.5 py-1.5 rounded-lg border text-xs font-medium transition flex items-center gap-1.5 ${
@@ -1745,7 +2090,6 @@
             }).join('');
         }
 
-        // Ganti status cepat langsung dari kartu
         function cycleStatus(id) {
             const statuses = ['Belum Dicoba', 'Sedang Dipelajari', 'Wajib Pakai', 'Arsip'];
             const index = repos.findIndex(r => r.id === id);
@@ -1779,12 +2123,11 @@
             document.getElementById('refetch-btn').classList.add('hidden');
             document.getElementById('url-extract-hint').innerHTML = `<i class="fa-solid fa-circle-info text-slate-600"></i> <span>Tempel link GitHub untuk deteksi otomatis nama, deskripsi, stars & kategori.</span>`;
 
-            // Atur status default toggle Otomatis Star di GitHub
             const autoStarCheckbox = document.getElementById('repo-auto-star');
             const autoStarSubtext = document.getElementById('auto-star-subtext');
             if (ghConfig.token) {
                 autoStarCheckbox.disabled = false;
-                autoStarCheckbox.checked = !editId; // Otomatis aktif saat tambah repo baru
+                autoStarCheckbox.checked = !editId;
                 autoStarSubtext.textContent = `Akan langsung memberi Star sebagai @${ghConfig.user?.login || 'GitHub User'}`;
             } else {
                 autoStarCheckbox.checked = false;
@@ -1978,7 +2321,6 @@
                         if (item.url && item.name) {
                             let newId = item.id || 'repo-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
                             if (existingIds.has(newId)) {
-                                // ID bentrok: buat ID baru agar dua repo tidak saling menimpa
                                 newId = 'repo-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
                             }
                             existingIds.add(newId);
